@@ -20,7 +20,9 @@ def exit_error(*error_data: Any) -> None:
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Verify the database.")
     parser.add_argument("-c", action="store_true", default=False, dest="check_types", help="Check types.")
+    parser.add_argument("-C", action="store_true", default=False, dest="clear_data", help="Clear data field.")
     parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV file.")
+    parser.add_argument("-D", action="store_true", default=False, dest="dump_data", help="Dump data field.")
     parser.add_argument("-f", action="store_true", default=False, dest="fix_errors", help="Fix errors.")
     parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
@@ -179,6 +181,15 @@ def main() -> None:
                     master[i].data["BNOPATH"] = True
 
         print(f"{len(master)} records checked.")
+
+        if args.dump_data:
+            for i, _ in enumerate(master):
+                print(f"{master[i].data}")
+
+        if args.clear_data:
+            for i, _ in enumerate(master):
+                master[i].data={}
+            changed = True
 
         if changed and args.write_file:
             ml.write_entries_file(master, master_output_path, args.write_csv)
