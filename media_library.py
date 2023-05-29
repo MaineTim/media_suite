@@ -1,4 +1,4 @@
-# Media Library Version 23-05-25-a
+# Media Library Version 23-05-29-a
 
 import bisect
 import csv
@@ -183,7 +183,7 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
             w = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
             w.writerow(
                 [
-                    "Serialnum",
+                    "UID",
                     "Path",
                     "Name",
                     "Ext",
@@ -196,6 +196,8 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
                     "C_Duration",
                     "Ino",
                     "Nlink",
+                    "CSum",
+                    "Data",
                 ]
             )
             w.writerows(
