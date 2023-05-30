@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 import sys
 from typing import Any, Tuple
@@ -99,6 +100,11 @@ def main() -> None:
                         changed = True
                 except (ValueError, TypeError) as e:
                     exit_error(e)
+                if not isinstance(master[i].date, datetime.datetime):
+                    exit_error(f"{master[i].name} date field is invalid: {master[i].date}")
+                if not isinstance(master[i].data, dict):
+                    exit_error(f"{master[i].name} data field is invalid: {master[i].data}")
+
 
         # Create a list of inodes, and check that there are no duplicates (multiple entries pointing to one file).
         inodes = sorted([(i, item.ino) for i, item in enumerate(master)], key=lambda x: x[1])
@@ -118,7 +124,6 @@ def main() -> None:
                 target_stat = os.stat(target_path)
             else:
                 print(f"{target_path} doesn't exist!")
-                master[i].data["DNE"] = True
                 continue
             # Entry doesn't match target inode, flag it.
             if target_stat.st_ino != item.ino:
@@ -127,13 +132,10 @@ def main() -> None:
                     if get_reply("Fix this error?"):
                         master[i].ino = target_stat.st_ino
                         changed = True
-                else:
-                    master[i].data["INODE"] = True
                 continue
             # Entry size doesn't match, flag it.
             if target_stat.st_size != item.current_size:
                 print(f"{target_path} has changed size from {item.current_size} to {target_stat.st_size}.")
-                master[i].data["SIZE"] = True
                 continue
 
             if (normal_paths := normalize_paths(item.paths)) != item.paths:
@@ -144,6 +146,13 @@ def main() -> None:
                 item.paths = paths
                 item.backups = len(paths)
                 changed = True
+
+            if len(item.paths) != item.backups:
+                print(f"{target_path} backup count {item.backups} does not match path list length {len(item.paths)}.")                
+                if args.fix_errors:
+                    if get_reply("Fix this error?"):
+                        master[i].backups = len(item.paths)
+                        changed = True
 
             for j, whole_path in enumerate(item.paths[:]):
                 path, inode = ml.split_backup_path(whole_path)
@@ -158,15 +167,12 @@ def main() -> None:
                                 if get_reply("Fix this error?"):
                                     master[i].paths[j] = f"{path}[{backup_stat.st_ino}]"
                                     changed = True
-                            else:
-                                master[i].data["BINODE"] = True
                             continue
                         # Backup size doesn't match.
                         if backup_stat.st_size != item.current_size:
                             print(
                                 f"{backup_path} backup has changed size from {item.current_size} to {backup_stat.st_size}."
                             )
-                            master[i].data["BSIZE"] = True
                             continue
                     else:
                         print(f"{backup_path} backup doesn't exist. {item.backups} backups listed.")
@@ -174,17 +180,16 @@ def main() -> None:
                             master[i].paths.remove(whole_path)
                             master[i].backups -= 1
                             changed = True
-                        if master[i].backups < 1:
-                            master[i].data["BMISSING"] = True
                         continue
-                else:
-                    master[i].data["BNOPATH"] = True
-
+            if master[i].backups < 1 and len(master[i].paths) < 1:
+                print(f"Warning: {target_path} has no valid backups.")
+ 
         print(f"{len(master)} records checked.")
 
         if args.dump_data:
             for i, _ in enumerate(master):
-                print(f"{master[i].data}")
+                if master[i].data != {}:
+                    print(f"{master[i].data}")
 
         if args.clear_data:
             for i, _ in enumerate(master):
