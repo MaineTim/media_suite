@@ -14,7 +14,6 @@ def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert CSV file to master_filelist.")
     parser.add_argument("target_csv", nargs=1)
     parser.add_argument("-d", action="store_true", default=False, dest="write_csv")
-    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
     parser.add_argument("-v", action="store_true", default=False, dest="verbose")
     parser.add_argument("-w", action="store_true", default=False, dest="write_file", help="Write master_filelist.")
@@ -35,15 +34,15 @@ def main() -> None:
     if args.master_output_path:
         master_output_path = args.master_output_path
     else:
-        master_output_path = args.master_input_path
+        master_output_path = os.path.splitext(args.target_csv[0])
     gb_verbose = args.verbose
 
     master = []
     with open(args.target_csv[0], "r") as f:
         r = csv.reader(f)
-        header = next(r)
+        next(r)
         for list_item in r:
-            item = Entries(*list_item)            
+            item = Entries(*list_item)
             entry = Entries(
                 UID=item.UID,
                 path=item.path,
@@ -63,7 +62,8 @@ def main() -> None:
             master.append(entry)
 
     if args.write_file:
-        ml.write_entries_file(master,master_output_path, args.write_csv)
+        ml.write_entries_file(master, master_output_path, args.write_csv)
+
 
 if __name__ == "__main__":
     main()

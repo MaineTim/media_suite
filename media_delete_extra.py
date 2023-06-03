@@ -9,6 +9,7 @@ import media_library as ml
 
 gb_change_made = False
 
+
 def exit_error(*error_data: Any) -> None:
     for i, data in enumerate(error_data):
         print(data, end=" ")

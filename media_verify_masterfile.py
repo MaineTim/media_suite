@@ -2,7 +2,7 @@ import argparse
 import datetime
 import os
 import sys
-from typing import Any, Tuple
+from typing import Any
 
 import getch
 
@@ -105,7 +105,6 @@ def main() -> None:
                 if not isinstance(master[i].data, dict):
                     exit_error(f"{master[i].name} data field is invalid: {master[i].data}")
 
-
         # Create a list of inodes, and check that there are no duplicates (multiple entries pointing to one file).
         inodes = sorted([(i, item.ino) for i, item in enumerate(master)], key=lambda x: x[1])
         for i in range(len(inodes) - 1):
@@ -148,7 +147,7 @@ def main() -> None:
                 changed = True
 
             if len(item.paths) != item.backups:
-                print(f"{target_path} backup count {item.backups} does not match path list length {len(item.paths)}.")                
+                print(f"{target_path} backup count {item.backups} does not match path list length {len(item.paths)}.")
                 if args.fix_errors:
                     if get_reply("Fix this error?"):
                         master[i].backups = len(item.paths)
@@ -165,7 +164,7 @@ def main() -> None:
                             print(f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}.")
                             if args.fix_errors:
                                 if get_reply("Fix this error?"):
-                                    master[i].paths[j] = f"{path}[{backup_stat.st_ino}]"
+                                    master[i].paths[j] = f"{path}/[{backup_stat.st_ino}]"
                                     changed = True
                             continue
                         # Backup size doesn't match.
@@ -183,7 +182,7 @@ def main() -> None:
                         continue
             if master[i].backups < 1 and len(master[i].paths) < 1:
                 print(f"Warning: {target_path} has no valid backups.")
- 
+
         print(f"{len(master)} records checked.")
 
         if args.dump_data:
@@ -193,7 +192,7 @@ def main() -> None:
 
         if args.clear_data:
             for i, _ in enumerate(master):
-                master[i].data={}
+                master[i].data = {}
             changed = True
 
         if changed and args.write_file:
