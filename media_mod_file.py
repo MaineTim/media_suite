@@ -67,9 +67,8 @@ def main() -> None:
         master_output_path = master_input_path
     target_path = args.target_path[0]
 
-    if not args.run_without_master:
-        if (master := ml.read_master_file(master_input_path)) == []:
-            exit_error(f"{master_input_path} not found and is required.")
+    if (master := ml.read_master_file(master_input_path)) == []:
+        exit_error(f"{master_input_path} not found and is required.")
 
     if os.path.exists(target_path):
         target = ml.create_file_entry(target_path)
@@ -85,6 +84,8 @@ def main() -> None:
 
     master[orig_index].current_duration = ml.file_duration(target_path)
     master[orig_index].current_size = os.stat(target_path).st_size
+    if master[orig_index].csum != "":
+        master[orig_index].csum = ml.checksum(target_path)
 
     if args.write_file:
         ml.write_entries_file(master, master_output_path, args.write_csv)
