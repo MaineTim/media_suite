@@ -13,7 +13,6 @@ from media_library import Entries
 master = []
 gb_no_action = False
 gb_verbose = False
-gb_write_csv = False
 
 
 def exit_error(*error_data):
@@ -28,12 +27,8 @@ def exit_error(*error_data):
 def get_args():
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument("-d", action="store_true", default=False, dest="write_csv")
     parser.add_argument("-e", type=str, dest="end_trim_length", default="00:00:00")
-    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-n", action="store_true", default=False, dest="no_action")
-    parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument("-r", action="store_true", default=False, dest="run_without_master")
     parser.add_argument("-s", type=str, dest="start_trim_length", default="00:00:00")
     parser.add_argument("-t", action="store_true", default=False, dest="tag_modified")
     parser.add_argument("-v", action="store_true", default=False, dest="verbose")
@@ -66,26 +61,12 @@ def main():
         gb_verbose = args.verbose
     if args.no_action:
         gb_no_action = args.no_action
-    master_input_path = args.master_input_path
-    if args.master_output_path:
-        master_output_path = args.master_output_path
-    else:
-        master_output_path = master_input_path
     target_path = args.target_path[0]
-
-    if not args.run_without_master:
-        if (master := ml.read_master_file(master_input_path)) == []:
-            exit_error(f"{master_input_path} not found and is required.")
 
     if os.path.exists(target_path):
         target = ml.create_file_entry(target_path)
     else:
         exit_error(f"Target file not found: {target_path}")
-
-    if not args.run_without_master:
-        found, result = ml.check_db(master, target)
-        if not found:
-            exit_error("Master entry not found: {target}")
 
     duration = ml.file_duration(target_path)
     td_duration = dt.timedelta(seconds=float(duration))
@@ -95,7 +76,7 @@ def main():
 
     temp_outfile = str(uuid.uuid4()) + ".mp4"
     command = (
-        f'ffmpeg -i "{target_path}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{temp_outfile}"'
+        f'ffmpeg -i "{target_path}" -metadata comment="###MDV1### {duration} {target.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{temp_outfile}"'
     )
 
     if gb_verbose:
@@ -108,38 +89,12 @@ def main():
         new_duration = ml.file_duration(temp_outfile)
         if args.tag_modified:
             root, ext = os.path.splitext(target_path)
-            target_path = root + f" - OrLn({time.strftime('%H%M%S', time.gmtime(float(new_duration)))})" + ext
+            target_path = root + f" - OrLn({time.strftime('%H%M%S', time.gmtime(float(duration)))})" + ext
         move_file(temp_outfile, target_path)
         os.utime(target_path, (dt.datetime.timestamp(target.date), dt.datetime.timestamp(target.date)))
         stat_entry = os.stat(target_path)
         if gb_verbose:
             print(f"Trimmed from {duration} to {new_duration}.")
-        if not args.run_without_master:
-            old = master[result]
-            new_data = old.data
-            if args.tag_modified:
-                target_name = os.path.basename(target_path)
-                new_data["untrimmed name"] = old.name
-            else:
-                target_name = old.name
-            new = Entries(
-                UID=old.UID,
-                path=old.path,
-                name=target_name,
-                original_size=old.original_size,
-                current_size=stat_entry.st_size,
-                date=dt.datetime.fromtimestamp(stat_entry.st_mtime, tz=dt.timezone.utc),
-                backups=old.backups,
-                paths=old.paths,
-                original_duration=old.original_duration,
-                current_duration=new_duration,
-                ino=stat_entry.st_ino,
-                nlink=stat_entry.st_nlink,
-                csum=0,
-                data=new_data,
-            )
-            master[result] = new
-            ml.write_entries_file(master, master_output_path, args.write_csv)
 
 
 if __name__ == "__main__":

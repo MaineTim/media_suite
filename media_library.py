@@ -1,4 +1,4 @@
-# Media Library Version 23-05-29-a
+# Media Library Version 23-06-04-a
 
 import bisect
 import csv
@@ -9,7 +9,7 @@ import os
 import pathlib
 import pickle
 from dataclasses import dataclass, field
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Tuple, Optional
 
 import ffmpeg
 
@@ -58,6 +58,28 @@ def checksum(filename: str, hash_factory: Callable[..., Any] = hashlib.md5, chun
         for chunk in iter(lambda: f.read(chunk_num_blocks * h.block_size), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def file_md_tag(filename: str) -> Tuple[str, str]:
+    # Return tuple of empty strings if tag not found.
+    header = "###MDV1###"
+
+    duration = 0
+    try:
+        info = ffmpeg.probe(filename)
+    except ffmpeg.Error as e:
+        print()
+        print(e.stderr)
+        print()
+        return ("", "")
+    try:
+        md_tag = info["format"]["tags"]["comment"]
+    except KeyError:
+        return ("", "")
+    if (header_start := md_tag.find(header)) != 0:
+        return ("", "")
+    duration, size, *_ = md_tag[header_start + 11:].split(" ")
+    return (duration, size) 
 
 
 def file_duration(filename: str) -> float:
