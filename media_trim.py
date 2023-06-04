@@ -10,7 +10,6 @@ import uuid
 import media_library as ml
 from media_library import Entries
 
-master = []
 gb_no_action = False
 gb_verbose = False
 
