@@ -102,7 +102,7 @@ def main() -> None:
                                     f"Sizes don't match! {os.stat(os.path.join(target_path, filename)).st_size} {item.current_size}"
                                 )
                             continue
-                        if int(ml.file_duration(os.path.join(target_path, filename))) == int(item.current_duration):
+                        if abs(ml.file_duration(os.path.join(target_path, filename)) - (item.current_duration)) < 0.5:
                             remove_file(os.path.join(target_path, filename))
                         else:
                             if gb_verbose:
