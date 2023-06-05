@@ -20,10 +20,10 @@ def exit_error(*error_data: Any) -> None:
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Update database with backup information.")
     parser.add_argument("backup_path", nargs=1)
-    parser.add_argument("-d", action="store_true", default=False, dest="write_csv")
+    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
     parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose")
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
 

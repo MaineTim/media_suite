@@ -26,9 +26,9 @@ def get_args():
     parser = argparse.ArgumentParser(description="Trim filenames of target phrase.")
     parser.add_argument("target_phrase", nargs=1)
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument("-n", action="store_true", default=False, dest="no_action")
-    parser.add_argument("-t", action="store_true", default=False, dest="trim_number")
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose")
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
+    parser.add_argument("-t", action="store_true", default=False, dest="trim_number", help="Trim numbers.")
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose")
     args = parser.parse_args()
     return args
 

@@ -9,7 +9,7 @@ import os
 import pathlib
 import pickle
 from dataclasses import dataclass, field
-from typing import Any, Callable, Tuple, Optional
+from typing import Any, Callable, Optional, Tuple
 
 import ffmpeg
 
@@ -78,8 +78,8 @@ def file_md_tag(filename: str) -> Tuple[str, str]:
         return ("", "")
     if (header_start := md_tag.find(header)) != 0:
         return ("", "")
-    duration, size, *_ = md_tag[header_start + 11:].split(" ")
-    return (duration, size) 
+    duration, size, *_ = md_tag[header_start + 11 :].split(" ")
+    return (duration, size)
 
 
 def file_duration(filename: str) -> float:

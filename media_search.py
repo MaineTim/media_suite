@@ -22,9 +22,11 @@ def get_args():
     parser = argparse.ArgumentParser(description="Search for entries.")
     parser.add_argument("target_strings", nargs="+")
     parser.add_argument("-m", type=str, dest="master_input_path", default="master_filelist")
-    parser.add_argument("-i", action="store_true", default=False, dest="case_insensitive")
-    parser.add_argument("-p", action="store_true", default=False, dest="print_path")
-    parser.add_argument("-t", action="store_true", default=False, dest="sort_time")
+    parser.add_argument("-i", action="store_true", default=False, dest="case_insensitive", help="Case insensitive.")
+    parser.add_argument("-p", action="store_true", default=False, dest="print_path", help="Print path.")
+    parser.add_argument(
+        "-t", action="store_true", default=False, dest="sort_time", help="Sort based on original duration."
+    )
     args = parser.parse_args()
     return args
 

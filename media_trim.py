@@ -8,7 +8,6 @@ import time
 import uuid
 
 import media_library as ml
-from media_library import Entries
 
 gb_no_action = False
 gb_verbose = False
@@ -26,11 +25,15 @@ def exit_error(*error_data):
 def get_args():
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument("-e", type=str, dest="end_trim_length", default="00:00:00")
-    parser.add_argument("-n", action="store_true", default=False, dest="no_action")
-    parser.add_argument("-s", type=str, dest="start_trim_length", default="00:00:00")
-    parser.add_argument("-t", action="store_true", default=False, dest="tag_modified")
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose")
+    parser.add_argument("-e", type=str, dest="end_trim_length", default="00:00:00", help="End trim length (HH:MM:SS).")
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
+    parser.add_argument(
+        "-s", type=str, dest="start_trim_length", default="00:00:00", help="Start trim length (HH:MM:SS)."
+    )
+    parser.add_argument(
+        "-t", action="store_true", default=False, dest="tag_modified", help="Add original duration to filename."
+    )
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
 
@@ -74,9 +77,7 @@ def main():
     td_new_end_time = td_duration - td_end_length
 
     temp_outfile = str(uuid.uuid4()) + ".mp4"
-    command = (
-        f'ffmpeg -i "{target_path}" -metadata comment="###MDV1### {duration} {target.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{temp_outfile}"'
-    )
+    command = f'ffmpeg -i "{target_path}" -metadata comment="###MDV1### {duration} {target.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{temp_outfile}"'
 
     if gb_verbose:
         print(command)
@@ -91,7 +92,6 @@ def main():
             target_path = root + f" - OrLn({time.strftime('%H%M%S', time.gmtime(float(duration)))})" + ext
         move_file(temp_outfile, target_path)
         os.utime(target_path, (dt.datetime.timestamp(target.date), dt.datetime.timestamp(target.date)))
-        stat_entry = os.stat(target_path)
         if gb_verbose:
             print(f"Trimmed from {duration} to {new_duration}.")
 

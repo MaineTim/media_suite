@@ -1,16 +1,10 @@
 import argparse
-import datetime as dt
-import ffmpeg
 import os
-import shutil
-import subprocess
 import sys
-import time
-import uuid
-from typing import Optional, Tuple
+from typing import Tuple
+
 
 import media_library as ml
-from media_library import Entries
 
 gb_no_action = False
 gb_verbose = False
@@ -29,11 +23,11 @@ def exit_error(*error_data):
 def get_args():
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument("-d", action="store_true", default=False, dest="write_csv")
+    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
     parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
-    parser.add_argument("-n", action="store_true", default=False, dest="no_action")
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose")
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="verbose.")
     parser.add_argument("-w", action="store_true", default=False, dest="write_file", help="Write master_filelist.")
     args = parser.parse_args()
     return args
@@ -77,7 +71,7 @@ def main() -> None:
     orig_duration, orig_size = ml.file_md_tag(target_path)
     if orig_duration == "":
         exit_error(f"{target_path} has no mp_tag. Cannot detect original file.")
-    found, orig_index = find_original(master, target, orig_duration, orig_size) 
+    found, orig_index = find_original(master, target, orig_duration, orig_size)
     if found:
         print(f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}")
 

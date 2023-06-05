@@ -24,8 +24,8 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("target_path", nargs=1)
     parser.add_argument("-D", type=str, dest="delete_path")
     parser.add_argument("--deleted-input-path", type=str, dest="deleted_input_path", default="deleted_filelist")
-    parser.add_argument("-n", action="store_true", default=False, dest="no_action")
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose")
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
 
