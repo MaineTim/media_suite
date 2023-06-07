@@ -3,8 +3,8 @@ import os
 import sys
 from typing import Tuple
 
-
 import media_library as ml
+from media_library import Entries
 
 gb_no_action = False
 gb_verbose = False
@@ -20,7 +20,7 @@ def exit_error(*error_data):
     sys.exit()
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
     parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
@@ -33,7 +33,7 @@ def get_args():
     return args
 
 
-def find_original(master, target, orig_duration, orig_size) -> Tuple[bool, int]:
+def find_original(master: list[Entries], target: Entries, orig_size: str) -> Tuple[bool, int]:
     found = True
     start = 0
     while found:
@@ -71,12 +71,15 @@ def main() -> None:
     orig_duration, orig_size = ml.file_md_tag(target_path)
     if orig_duration == "":
         exit_error(f"{target_path} has no mp_tag. Cannot detect original file.")
-    found, orig_index = find_original(master, target, orig_duration, orig_size)
+    found, orig_index = find_original(master, target, orig_size)
     if found:
         print(f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}")
+    else:
+        exit_error(f"Original entry for {target.name} not found.")
 
     master[orig_index].current_duration = ml.file_duration(target_path)
-    master[orig_index].current_size = os.stat(target_path).st_size
+    master[orig_index].current_size = int(os.stat(target_path).st_size)
+    master[orig_index].ino = int(os.stat(target_path).st_ino)
     if master[orig_index].csum != "":
         master[orig_index].csum = ml.checksum(target_path)
 

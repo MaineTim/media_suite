@@ -4,8 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
-import uuid
 
 import media_library as ml
 
@@ -25,6 +23,9 @@ def exit_error(*error_data):
 def get_args():
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
+    parser.add_argument(
+        "-b", type=str, dest="original_dir", required=True, default="", help="Original file backup dir (required)."
+    )
     parser.add_argument("-e", type=str, dest="end_trim_length", default="00:00:00", help="End trim length (HH:MM:SS).")
     parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument(
@@ -50,7 +51,7 @@ def move_file(source, target):
         try:
             shutil.move(source, target)
         except OSError as e:
-            exit_error(f"Trimmed file move failed: {e}")
+            exit_error(f"Original file move failed: {e}")
     return os.stat(target)
 
 
@@ -70,27 +71,28 @@ def main():
     else:
         exit_error(f"Target file not found: {target_path}")
 
-    duration = ml.file_duration(target_path)
+    if args.original_dir != "" and os.path.exists(args.original_dir):
+        move_file(target_path, args.original_dir)
+        source_path = os.path.join(args.original_dir, os.path.basename(target_path))
+    else:
+        exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
+
+    duration = ml.file_duration(source_path)
     td_duration = dt.timedelta(seconds=float(duration))
     td_start_length = str_to_td(args.start_trim_length)
     td_end_length = str_to_td(args.end_trim_length)
     td_new_end_time = td_duration - td_end_length
 
-    temp_outfile = str(uuid.uuid4()) + ".mp4"
-    command = f'ffmpeg -i "{target_path}" -metadata comment="###MDV1### {duration} {target.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{temp_outfile}"'
+    command = f'ffmpeg -hide_banner -loglevel error -i "{source_path}" -metadata comment="###MDV1### {duration} {target.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{target_path}"'
 
     if gb_verbose:
         print(command)
 
     if not gb_no_action:
-        proc_return = subprocess.run(command, shell=True)
+        proc_return = subprocess.run(command, shell=True, check=False)
         if proc_return.returncode != 0:
             exit_error("Trim process failed.")
-        new_duration = ml.file_duration(temp_outfile)
-        if args.tag_modified:
-            root, ext = os.path.splitext(target_path)
-            target_path = root + f" - OrLn({time.strftime('%H%M%S', time.gmtime(float(duration)))})" + ext
-        move_file(temp_outfile, target_path)
+        new_duration = ml.file_duration(target_path)
         os.utime(target_path, (dt.datetime.timestamp(target.date), dt.datetime.timestamp(target.date)))
         if gb_verbose:
             print(f"Trimmed from {duration} to {new_duration}.")

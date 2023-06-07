@@ -168,9 +168,9 @@ def main() -> None:
                                     changed = True
                             continue
                         # Backup size doesn't match.
-                        if backup_stat.st_size != item.current_size:
+                        if backup_stat.st_size != item.original_size:
                             print(
-                                f"{backup_path} backup has changed size from {item.current_size} to {backup_stat.st_size}."
+                                f"{backup_path} backup has changed size from {item.original_size} to {backup_stat.st_size}."
                             )
                             continue
                     else:
