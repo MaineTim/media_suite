@@ -1,6 +1,7 @@
 # Media Library Version 23-06-04-a
 
 import bisect
+import copy
 import csv
 import datetime
 import hashlib
@@ -8,7 +9,7 @@ import operator
 import os
 import pathlib
 import pickle
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Optional, Tuple
 
 import ffmpeg
@@ -51,13 +52,25 @@ class Entries:
     csum: str = ""
     data: dict[Any, Any] = field(default_factory=dict)
 
+@dataclass
+class SortPointer:
+    size: int = 0
+    index: int = 0
 
-def copy_sort_database(database: list[Entries], key_str: str):
+
+def pointer_sort_database(database: list[Entries]) -> list[SortPointer]:
+    pointer_list = [SortPointer(e.original_size, i) for i, e in enumerate(database)]
+    pointer_list.sort(key=lambda x: getattr(x, "size"))
+    return pointer_list
+
+
+def deepcopy_sort_database(database: list[Entries], key_str: str):
     new_db = []
-    for i, e in enumerate(database[:]):
-        e.data["index"] = i
-        new_db.append(e)
-        new_db.sort(key=lambda x: getattr(x, key_str))
+    for i, e in enumerate(database):
+        entry = copy.deepcopy(e)
+        entry.data["index"] = i
+        new_db.append(entry)
+    new_db.sort(key=lambda x: getattr(x, key_str))
     return new_db
 
 
@@ -132,6 +145,7 @@ def check_current_size(database: list[Entries], size: int, start: int = 0) -> Tu
         return (True, result)
 
 
+# Find an entry based on original file size, using a sorted copy of master.
 # Return True, result if size matches.
 def check_original_size(database: list[Entries], size: int, start: int = 0) -> Tuple[bool, int]:
     entry_size = operator.attrgetter("original_size")
@@ -144,6 +158,21 @@ def check_original_size(database: list[Entries], size: int, start: int = 0) -> T
         return (False, 0)
     else:
         return (True, result)
+
+
+# Find an entry based on original file size, using a sorted list of pointers to master.
+# Return True, resulting master index if size matches.
+def check_original_size_pointers(database: list[Entries], pointers: list[SortPointer], size: int, start: int = 0) -> Tuple[bool, int]:
+    entry_size = operator.attrgetter("size")
+
+    if start > 0:
+        result = start + 1
+    else:
+        result = bisect.bisect_left(pointers, size, key=entry_size)
+    if result >= len(pointers) or pointers[result].size != size:
+        return (False, 0)
+    else:
+        return (True, pointers[result].index)
 
 
 # Return True, result if size and name match.

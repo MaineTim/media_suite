@@ -33,11 +33,11 @@ def get_args() -> argparse.Namespace:
     return args
 
 
-def find_original(master: list[Entries], sorted_pointers: list[SortPointer], target: Entries, orig_size: str) -> Tuple[bool, int]:
+def find_original(master: list[Entries], sorted_pointers: list[SortPointer], target: Entries) -> Tuple[bool, int]:
     found = True
     start = 0
     while found:
-        found, fp_index = ml.check_original_size_pointers(master, sorted_pointers, int(orig_size), start)
+        found, fp_index = ml.check_original_size_pointers(master, sorted_pointers, target.original_size, start)
         if found and (master[fp_index].name == target.name):
             return (found, fp_index)
         start = fp_index
@@ -72,21 +72,15 @@ def main() -> None:
 
     for item in target:
         item_path = os.path.join(item.path, item.name)
-        orig_duration, orig_size = ml.file_md_tag(item_path)
-        if orig_duration == "":
-            exit_error(f"{item_path} has no mp_tag. Cannot detect original file.")
-        found, orig_index = find_original(master, sorted_pointers, item, orig_size)
+        found, orig_index = find_original(master, sorted_pointers, item)
         if found:
             if gb_verbose:
-                print(f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}")
+                print(f"Found original entry - {orig_index}: {master[orig_index].name}")
         else:
             exit_error(f"Original entry for {item.name} not found.")
 
-        master[orig_index].current_duration = ml.file_duration(item_path)
-        master[orig_index].current_size = int(os.stat(item_path).st_size)
-        master[orig_index].ino = int(os.stat(item_path).st_ino)
-        if master[orig_index].csum != "":
-            master[orig_index].csum = ml.checksum(item_path)
+
+
 
     if args.write_file:
         master.sort(key=lambda x: getattr(x, "current_size"))
