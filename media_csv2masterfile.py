@@ -62,6 +62,7 @@ def main() -> None:
             master.append(entry)
 
     if args.write_file:
+        master.sort(key=lambda x: getattr(x, "current_size"))
         ml.write_entries_file(master, master_output_path, args.write_csv)
 
 
