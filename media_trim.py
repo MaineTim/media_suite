@@ -20,7 +20,7 @@ def exit_error(*error_data):
     sys.exit()
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
     parser.add_argument(
@@ -39,12 +39,12 @@ def get_args():
     return args
 
 
-def str_to_td(string):
+def str_to_td(string: str) -> dt.timedelta:
     dt_result = dt.datetime.strptime(string, "%H:%M:%S")
     return dt.timedelta(hours=dt_result.hour, minutes=dt_result.minute, seconds=dt_result.second)
 
 
-def move_file(source, target):
+def move_file(source: str, target: str):
     if gb_verbose:
         print(f"move_file {source} -> {target}")
     if not gb_no_action:
@@ -67,35 +67,37 @@ def main():
     target_path = args.target_path[0]
 
     if os.path.exists(target_path):
-        target = ml.create_file_entry(target_path)
+        target = ml.create_file_list(target_path)
     else:
-        exit_error(f"Target file not found: {target_path}")
+        exit_error(f"Target not found: {target_path}")
 
-    if args.original_dir != "" and os.path.exists(args.original_dir):
-        move_file(target_path, args.original_dir)
-        source_path = os.path.join(args.original_dir, os.path.basename(target_path))
-    else:
-        exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
+    for item in target:
+        item_path = os.path.join(item.path, item.name)
+        if args.original_dir != "" and os.path.exists(args.original_dir):
+            move_file(item_path, args.original_dir)
+            source_path = os.path.join(args.original_dir, item.name)
+        else:
+            exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
 
-    duration = ml.file_duration(source_path)
-    td_duration = dt.timedelta(seconds=float(duration))
-    td_start_length = str_to_td(args.start_trim_length)
-    td_end_length = str_to_td(args.end_trim_length)
-    td_new_end_time = td_duration - td_end_length
+        duration = ml.file_duration(source_path)
+        td_duration = dt.timedelta(seconds=float(duration))
+        td_start_length = str_to_td(args.start_trim_length)
+        td_end_length = str_to_td(args.end_trim_length)
+        td_new_end_time = td_duration - td_end_length
 
-    command = f'ffmpeg -hide_banner -loglevel error -i "{source_path}" -metadata comment="###MDV1### {duration} {target.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{target_path}"'
+        command = f'ffmpeg -hide_banner -loglevel error -i "{source_path}" -metadata comment="###MDV1### {duration} {item.current_size}" -ss {td_start_length} -to {td_new_end_time} -c:v copy -c:a copy "{item_path}"'
 
-    if gb_verbose:
-        print(command)
-
-    if not gb_no_action:
-        proc_return = subprocess.run(command, shell=True, check=False)
-        if proc_return.returncode != 0:
-            exit_error("Trim process failed.")
-        new_duration = ml.file_duration(target_path)
-        os.utime(target_path, (dt.datetime.timestamp(target.date), dt.datetime.timestamp(target.date)))
         if gb_verbose:
-            print(f"Trimmed from {duration} to {new_duration}.")
+            print(command)
+
+        if not gb_no_action:
+            proc_return = subprocess.run(command, shell=True, check=False)
+            if proc_return.returncode != 0:
+                exit_error("Trim process failed.")
+            new_duration = ml.file_duration(item_path)
+            os.utime(item_path, (dt.datetime.timestamp(item.date), dt.datetime.timestamp(item.date)))
+            if gb_verbose:
+                print(f"Trimmed from {duration} to {new_duration}.")
 
 
 if __name__ == "__main__":

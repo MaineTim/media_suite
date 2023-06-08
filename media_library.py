@@ -110,8 +110,8 @@ def check_inode_in_path(database: list[Entries], path: str, inode: int) -> Tuple
 
 
 # Return True, result if size matches.
-def check_size(database: list[Entries], size: int, start: int = 0) -> Tuple[bool, int]:
-    entry_size = operator.attrgetter("current_size")
+def check_size(database: list[Entries], size: int, start: int = 0, key: str = "current_size") -> Tuple[bool, int]:
+    entry_size = operator.attrgetter(key)
 
     if start > 0:
         result = start + 1

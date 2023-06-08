@@ -37,7 +37,7 @@ def find_original(master: list[Entries], target: Entries, orig_size: str) -> Tup
     found = True
     start = 0
     while found:
-        found, fp_index = ml.check_size(master, int(orig_size), start)
+        found, fp_index = ml.check_size(master, int(orig_size), start, key="original_size")
         if found and (master[fp_index].name == target.name):
             return (found, fp_index)
         start = fp_index
@@ -64,24 +64,26 @@ def main() -> None:
         exit_error(f"{master_input_path} not found and is required.")
 
     if os.path.exists(target_path):
-        target = ml.create_file_entry(target_path)
+        target = ml.create_file_list(target_path)
     else:
-        exit_error(f"Target file not found: {target_path}")
+        exit_error(f"Target not found: {target_path}")
 
-    orig_duration, orig_size = ml.file_md_tag(target_path)
-    if orig_duration == "":
-        exit_error(f"{target_path} has no mp_tag. Cannot detect original file.")
-    found, orig_index = find_original(master, target, orig_size)
-    if found:
-        print(f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}")
-    else:
-        exit_error(f"Original entry for {target.name} not found.")
+    for item in target:
+        item_path = os.path.join(item.path, item.name)
+        orig_duration, orig_size = ml.file_md_tag(item_path)
+        if orig_duration == "":
+            exit_error(f"{item_path} has no mp_tag. Cannot detect original file.")
+        found, orig_index = find_original(master, item, orig_size)
+        if found:
+            print(f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}")
+        else:
+            exit_error(f"Original entry for {item.name} not found.")
 
-    master[orig_index].current_duration = ml.file_duration(target_path)
-    master[orig_index].current_size = int(os.stat(target_path).st_size)
-    master[orig_index].ino = int(os.stat(target_path).st_ino)
-    if master[orig_index].csum != "":
-        master[orig_index].csum = ml.checksum(target_path)
+        master[orig_index].current_duration = ml.file_duration(item_path)
+        master[orig_index].current_size = int(os.stat(item_path).st_size)
+        master[orig_index].ino = int(os.stat(item_path).st_ino)
+        if master[orig_index].csum != "":
+            master[orig_index].csum = ml.checksum(item_path)
 
     if args.write_file:
         ml.write_entries_file(master, master_output_path, args.write_csv)
