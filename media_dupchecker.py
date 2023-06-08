@@ -45,7 +45,7 @@ def check_target(target_path: str, master: list[ml.Entries], item: ml.Entries) -
     found, result = ml.check_db(master, item)
     if found:
         return found, result
-    found, result = ml.check_size(master, item.original_size)
+    found, result = ml.check_original_size(master, item.original_size)
     if found:
         checksum = ml.checksum(os.path.join(target_path, item.name))
         target_found = False
@@ -56,7 +56,7 @@ def check_target(target_path: str, master: list[ml.Entries], item: ml.Entries) -
                 print(f"Master entry: {master[result].name}")
                 print(f"Target file: {item.name}")
                 print("Files are same size.\n")
-            found, result = ml.check_size(master, item.original_size, result)
+            found, result = ml.check_original_size(master, item.original_size, result)
             if not found:
                 return False, 0
     return False, 0
@@ -75,6 +75,7 @@ def main() -> None:
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
         exit_error(f"{args.master_input_path} not found and is required.")
+    master.sort(key=lambda x: getattr(x, "original_size"))   
 
     if os.path.exists(target_path):
         target_list = ml.create_file_list(target_path)

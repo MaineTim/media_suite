@@ -52,6 +52,15 @@ class Entries:
     data: dict[Any, Any] = field(default_factory=dict)
 
 
+def copy_sort_database(database: list[Entries], key_str: str):
+    new_db = []
+    for i, e in enumerate(database[:]):
+        e.data["index"] = i
+        new_db.append(e)
+        new_db.sort(key=lambda x: getattr(x, key_str))
+    return new_db
+
+
 def checksum(filename: str, hash_factory: Callable[..., Any] = hashlib.md5, chunk_num_blocks: int = 128) -> Any:
     h = hash_factory()
     with open(filename, "rb") as f:
@@ -110,8 +119,8 @@ def check_inode_in_path(database: list[Entries], path: str, inode: int) -> Tuple
 
 
 # Return True, result if size matches.
-def check_size(database: list[Entries], size: int, start: int = 0, key: str = "current_size") -> Tuple[bool, int]:
-    entry_size = operator.attrgetter(key)
+def check_current_size(database: list[Entries], size: int, start: int = 0) -> Tuple[bool, int]:
+    entry_size = operator.attrgetter("current_size")
 
     if start > 0:
         result = start + 1
@@ -123,11 +132,25 @@ def check_size(database: list[Entries], size: int, start: int = 0, key: str = "c
         return (True, result)
 
 
+# Return True, result if size matches.
+def check_original_size(database: list[Entries], size: int, start: int = 0) -> Tuple[bool, int]:
+    entry_size = operator.attrgetter("original_size")
+
+    if start > 0:
+        result = start + 1
+    else:
+        result = bisect.bisect_left(database, size, key=entry_size)
+    if result >= len(database) or database[result].original_size != size:
+        return (False, 0)
+    else:
+        return (True, result)
+
+
 # Return True, result if size and name match.
 def check_db(database: list[Entries], item: Entries) -> Tuple[bool, int]:
     start = 0
     while True:
-        found, result = check_size(database, item.current_size, start)
+        found, result = check_current_size(database, item.current_size, start)
         if found:
             if database[result].name == item.name:
                 return True, result

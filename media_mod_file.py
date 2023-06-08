@@ -37,7 +37,7 @@ def find_original(master: list[Entries], target: Entries, orig_size: str) -> Tup
     found = True
     start = 0
     while found:
-        found, fp_index = ml.check_size(master, int(orig_size), start, key="original_size")
+        found, fp_index = ml.check_original_size(master, int(orig_size), start)
         if found and (master[fp_index].name == target.name):
             return (found, fp_index)
         start = fp_index

@@ -79,7 +79,7 @@ def search_file_path(master: list[Entries], quarentine: list[Entries], file_path
     start = 0
     # Look in master by size and name, then inode and size.
     while found:
-        found, fp_index = ml.check_size(master, fp_stat.st_size, start)
+        found, fp_index = ml.check_current_size(master, fp_stat.st_size, start)
         if found and (os.path.join(master[fp_index].path, master[fp_index].name) == file_path):
             return (MASTER, fp_index)
         start = fp_index
@@ -93,7 +93,7 @@ def search_file_path(master: list[Entries], quarentine: list[Entries], file_path
     found = True
     start = 0
     while found:
-        found, fp_index = ml.check_size(quarentine, fp_stat.st_size, start)
+        found, fp_index = ml.check_current_size(quarentine, fp_stat.st_size, start)
         if found and (
             quarentine[fp_index].date == datetime.datetime.fromtimestamp(fp_stat.st_mtime, tz=datetime.timezone.utc)
         ):
@@ -132,6 +132,7 @@ def main() -> None:
     gb_verbose = args.verbose
 
     if (master := ml.read_master_file(args.master_input_path)) != []:
+        master.sort(key=lambda x: getattr(x, "current_size"))
         master, quarentine = check_current_fs_status(master)
     target_paths = build_current_fs_path_list(args.target_paths)
     master = process_targets(master, quarentine, target_paths)

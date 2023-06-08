@@ -40,16 +40,16 @@ def path_inode(item: ml.Entries) -> Tuple[bool, int]:
 
 
 def check_master(master: list[ml.Entries], target_item: ml.Entries) -> Tuple[bool, int]:
-    entry_size = operator.attrgetter("current_size")
-
-    result = bisect.bisect_left(master, target_item.current_size, key=entry_size)
+    _, result = ml.check_original_size(master, target_item.original_size)
     while True:
-        if result == len(master) or master[result].current_size != target_item.current_size:
+        if result >= len(master) or master[result].original_size != target_item.original_size:
             return False, 0
         if master[result].name == target_item.name:
             return False, result
         found, inode = path_inode(master[result])
         if found and inode == target_item.ino and master[result].name != target_item.name:
+            return True, result
+        if abs(ml.file_duration(os.path.join(target_item.path, target_item.name)) - master[result].original_duration) < 0.5:
             return True, result
         if ml.checksum(os.path.join(master[result].path, master[result].name)) == ml.checksum(
             os.path.join(gb_target_path, target_item.name)
@@ -80,6 +80,7 @@ def main() -> None:
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
         exit_error(f"{args.master_input_path} not found and is required.")
+    master.sort(key=lambda x: getattr(x, "original_size"))
 
     if os.path.exists(gb_target_path):
         target_list = ml.create_file_list(gb_target_path)
