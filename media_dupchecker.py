@@ -75,7 +75,7 @@ def main() -> None:
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
         exit_error(f"{args.master_input_path} not found and is required.")
-    master.sort(key=lambda x: getattr(x, "original_size"))   
+    master.sort(key=lambda x: getattr(x, "original_size"))
 
     if os.path.exists(target_path):
         target_list = ml.create_file_list(target_path)

@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 import sys
 from typing import Any, Tuple
 
@@ -31,6 +32,28 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-w", action="store_true", default=False, dest="write_file", help="Write master_filelist.")
     args = parser.parse_args()
     return args
+
+
+def move_file(source: str, target: str):
+    if gb_verbose:
+        print(f"move_file {source} -> {target}")
+    if not gb_no_action:
+        try:
+            shutil.move(source, target)
+        except OSError as e:
+            exit_error(f"File move failed: {e}")
+    return os.stat(target)
+
+
+def copy_file(source: str, target: str):
+    if gb_verbose:
+        print(f"copy_file {source} -> {target}")
+    if not gb_no_action:
+        try:
+            shutil.copy2(source, target)
+        except OSError as e:
+            exit_error(f"File copy failed: {e}")
+    return os.stat(target)
 
 
 def find_original(master: list[Entries], sorted_pointers: list[SortPointer], target: Entries) -> Tuple[bool, int]:
@@ -79,8 +102,26 @@ def main() -> None:
         else:
             exit_error(f"Original entry for {item.name} not found.")
 
+        curr_file_path = os.path.join(master[orig_index].path, master[orig_index].name)
+        try:
+            os.stat(curr_file_path)
+        except OSError:
+            ...
+        else:
+            if gb_verbose:
+                print(f"Moving {curr_file_path} to trash.")
+            if not gb_no_action:
+                move_file(curr_file_path, os.path.join(master[orig_index].path, "DelLinks"))
+        if gb_verbose:
+            print(f"Copying backup file {item_path} to {master[orig_index].path}")
+        if not gb_no_action:
+            copy_file(item_path, curr_file_path)
 
-
+        master[orig_index].current_duration = ml.file_duration(curr_file_path)
+        master[orig_index].current_size = int(os.stat(curr_file_path).st_size)
+        master[orig_index].ino = int(os.stat(curr_file_path).st_ino)
+        if master[orig_index].csum != "":
+            master[orig_index].csum = ml.checksum(curr_file_path)
 
     if args.write_file:
         master.sort(key=lambda x: getattr(x, "current_size"))

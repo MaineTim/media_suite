@@ -9,8 +9,8 @@ import operator
 import os
 import pathlib
 import pickle
-from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import Any, Callable, Tuple
 
 import ffmpeg
 
@@ -52,6 +52,7 @@ class Entries:
     csum: str = ""
     data: dict[Any, Any] = field(default_factory=dict)
 
+
 @dataclass
 class SortPointer:
     size: int = 0
@@ -59,9 +60,7 @@ class SortPointer:
 
 
 def pointer_sort_database(database: list[Entries]) -> list[SortPointer]:
-    pointer_list = [SortPointer(e.original_size, i) for i, e in enumerate(database)]
-    pointer_list.sort(key=lambda x: getattr(x, "size"))
-    return pointer_list
+    return [SortPointer(e.original_size, i) for i, e in enumerate(database)].sort(key=lambda x: getattr(x, "size"))
 
 
 def deepcopy_sort_database(database: list[Entries], key_str: str):
@@ -162,7 +161,9 @@ def check_original_size(database: list[Entries], size: int, start: int = 0) -> T
 
 # Find an entry based on original file size, using a sorted list of pointers to master.
 # Return True, resulting master index if size matches.
-def check_original_size_pointers(database: list[Entries], pointers: list[SortPointer], size: int, start: int = 0) -> Tuple[bool, int]:
+def check_original_size_pointers(
+    database: list[Entries], pointers: list[SortPointer], size: int, start: int = 0
+) -> Tuple[bool, int]:
     entry_size = operator.attrgetter("size")
 
     if start > 0:

@@ -33,7 +33,9 @@ def get_args() -> argparse.Namespace:
     return args
 
 
-def find_original(master: list[Entries], sorted_pointers: list[SortPointer], target: Entries, orig_size: str) -> Tuple[bool, int]:
+def find_original(
+    master: list[Entries], sorted_pointers: list[SortPointer], target: Entries, orig_size: str
+) -> Tuple[bool, int]:
     found = True
     start = 0
     while found:

@@ -1,6 +1,4 @@
 import argparse
-import bisect
-import operator
 import os
 import shutil
 import sys
@@ -49,7 +47,10 @@ def check_master(master: list[ml.Entries], target_item: ml.Entries) -> Tuple[boo
         found, inode = path_inode(master[result])
         if found and inode == target_item.ino and master[result].name != target_item.name:
             return True, result
-        if abs(ml.file_duration(os.path.join(target_item.path, target_item.name)) - master[result].original_duration) < 0.5:
+        if (
+            abs(ml.file_duration(os.path.join(target_item.path, target_item.name)) - master[result].original_duration)
+            < 0.5
+        ):
             return True, result
         if ml.checksum(os.path.join(master[result].path, master[result].name)) == ml.checksum(
             os.path.join(gb_target_path, target_item.name)
