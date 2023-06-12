@@ -38,7 +38,7 @@ def rename_file(target_path, orig, name):
         print(f"Moving {os.path.join(target_path, orig.name)} -> {name}\n")
     if not gb_no_action:
         if os.path.exists(os.path.join(target_path, name)):
-            exit_error("{os.path.join(target_path, name)} already exists")
+            exit_error(f"{os.path.join(target_path, name)} already exists")
         shutil.move(os.path.join(target_path, orig.name), os.path.join(target_path, name))
 
 
