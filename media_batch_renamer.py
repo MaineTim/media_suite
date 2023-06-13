@@ -1,23 +1,13 @@
 import argparse
 import os
 import shutil
-import sys
-from typing import Any, Tuple
+from typing import Tuple
 
 import media_library as ml
 
 gb_no_action = False
 gb_target_path = ""
 gb_verbose = False
-
-
-def exit_error(*error_data: Any) -> None:
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -80,14 +70,14 @@ def main() -> None:
         gb_target_path = gb_target_path + "/"
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
-        exit_error(f"{args.master_input_path} not found and is required.")
+        ml.exit_error(f"{args.master_input_path} not found and is required.")
     master.sort(key=lambda x: getattr(x, "original_size"))
 
     if os.path.exists(gb_target_path):
         target_list = ml.create_file_list(gb_target_path)
         print(f"{len(target_list)} target files loaded.")
     else:
-        exit_error(f"{gb_target_path} doesn't exist!")
+        ml.exit_error(f"{gb_target_path} doesn't exist!")
 
     for item in target_list:
         needs_rename, result = check_master(master, item)

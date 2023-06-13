@@ -1,23 +1,12 @@
 import argparse
 import datetime as dt
 import os
-import shutil
 import subprocess
-import sys
 
 import media_library as ml
 
 gb_no_action = False
 gb_verbose = False
-
-
-def exit_error(*error_data):
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -44,17 +33,6 @@ def str_to_td(string: str) -> dt.timedelta:
     return dt.timedelta(hours=dt_result.hour, minutes=dt_result.minute, seconds=dt_result.second)
 
 
-def move_file(source: str, target: str):
-    if gb_verbose:
-        print(f"move_file {source} -> {target}")
-    if not gb_no_action:
-        try:
-            shutil.move(source, target)
-        except OSError as e:
-            exit_error(f"Original file move failed: {e}")
-    return os.stat(target)
-
-
 def main():
     global gb_no_action
     global gb_verbose
@@ -69,15 +47,15 @@ def main():
     if os.path.exists(target_path):
         target = ml.create_file_list(target_path)
     else:
-        exit_error(f"Target not found: {target_path}")
+        ml.exit_error(f"Target not found: {target_path}")
 
     for item in target:
         item_path = os.path.join(item.path, item.name)
         if args.original_dir != "" and os.path.exists(args.original_dir):
-            move_file(item_path, args.original_dir)
+            ml.move_file(item_path, args.original_dir, gb_verbose, gb_no_action)
             source_path = os.path.join(args.original_dir, item.name)
         else:
-            exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
+            ml.exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
 
         duration = ml.file_duration(source_path)
         td_duration = dt.timedelta(seconds=float(duration))
@@ -93,7 +71,7 @@ def main():
         if not gb_no_action:
             proc_return = subprocess.run(command, shell=True, check=False)
             if proc_return.returncode != 0:
-                exit_error("Trim process failed.")
+                ml.exit_error("Trim process failed.")
             new_duration = ml.file_duration(item_path)
             os.utime(item_path, (dt.datetime.timestamp(item.date), dt.datetime.timestamp(item.date)))
             if gb_verbose:

@@ -53,7 +53,9 @@ def process_targets(master: list[Entries], sorted_pointers: list[SortPointer], t
             if gb_verbose:
                 print(f"Moving {curr_file_path} to trash.")
             if not gb_no_action:
-                ml.move_file(curr_file_path, os.path.join(master[orig_index].path, "DelLinks"), gb_verbose, gb_no_action)
+                ml.move_file(
+                    curr_file_path, os.path.join(master[orig_index].path, "DelLinks"), gb_verbose, gb_no_action
+                )
         if gb_verbose:
             print(f"Copying backup file {item_path} to {master[orig_index].path}")
         if not gb_no_action:

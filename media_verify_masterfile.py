@@ -1,21 +1,10 @@
 import argparse
 import datetime
 import os
-import sys
-from typing import Any
 
 import getch
 
 import media_library as ml
-
-
-def exit_error(*error_data: Any) -> None:
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -99,11 +88,11 @@ def main() -> None:
                         master[i].csum = str(master[i].csum)
                         changed = True
                 except (ValueError, TypeError) as e:
-                    exit_error(e)
+                    ml.exit_error(e)
                 if not isinstance(master[i].date, datetime.datetime):
-                    exit_error(f"{master[i].name} date field is invalid: {master[i].date}")
+                    ml.exit_error(f"{master[i].name} date field is invalid: {master[i].date}")
                 if not isinstance(master[i].data, dict):
-                    exit_error(f"{master[i].name} data field is invalid: {master[i].data}")
+                    ml.exit_error(f"{master[i].name} data field is invalid: {master[i].data}")
 
         # Create a list of inodes, and check that there are no duplicates (multiple entries pointing to one file).
         inodes = sorted([(i, item.ino) for i, item in enumerate(master)], key=lambda x: x[1])
@@ -191,8 +180,8 @@ def main() -> None:
                     print(f"{master[i].data}")
 
         if args.clear_data:
-            for i, _ in enumerate(master):
-                master[i].data = {}
+            for item in master:
+                item.data = {}
             changed = True
 
         if changed and args.write_file:

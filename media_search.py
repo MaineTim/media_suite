@@ -1,21 +1,11 @@
 import argparse
 import os
 import re
-import sys
 import time
 
 import ahocorasick_rs as ah
 
 import media_library as ml
-
-
-def exit_error(*error_data):
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args():
@@ -42,7 +32,7 @@ def parse_target_strings(args):
     i = -1
     for token in args.target_strings:
         i += 1
-        if token == "OR" and i > 0 and len(args.target_strings) > i:
+        if token == "OR" and len(args.target_strings) > i > 0:
             if or_count < 1:
                 target_regex = target_regex[: len(target_regex) - 1] + "[" + target_regex[len(target_regex) - 1 :]
             or_count = 2
@@ -86,7 +76,7 @@ def main():
     args = get_args()
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
-        exit_error(f"{args.master_input_path} not found and is required.")
+        ml.exit_error(f"{args.master_input_path} not found and is required.")
 
     results = search_strings(master, args)
     entries = [master[res] for res in results]
@@ -95,17 +85,13 @@ def main():
     else:
         entries.sort(key=lambda x: x.name)
     if args.print_path:
-        [
+        for ent in entries:
             print(
                 f'{time.strftime("%H:%M:%S", time.gmtime(float(ent.original_duration)))} - {os.path.join(ent.path, ent.name)}'
             )
-            for ent in entries
-        ]
     else:
-        [
+        for ent in entries:
             print(f'{time.strftime("%H:%M:%S", time.gmtime(float(ent.original_duration)))} - {ent.name}')
-            for ent in entries
-        ]
 
 
 if __name__ == "__main__":

@@ -3,8 +3,7 @@ import bisect
 import datetime
 import operator
 import os
-import sys
-from typing import Any, Tuple
+from typing import Tuple
 
 import media_library as ml
 from media_library import Entries
@@ -17,15 +16,6 @@ MASTER = 1
 QUARENTINE = 2
 
 gb_verbose = False
-
-
-def exit_error(*error_data: Any) -> None:
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -51,7 +41,7 @@ def check_current_fs_status(master: list[Entries]) -> Tuple[list[Entries], list[
             master.remove(item)
         # Entry has changed size, bail so user can investigate.
         elif (size := os.stat(item_path).st_size) != item.current_size:
-            exit_error(f"{item.name} has changed size from {item.current_size} to {size}.")
+            ml.exit_error(f"{item.name} has changed size from {item.current_size} to {size}.")
     print(f"{len(master)} records loaded.")
     return (master, quarentine)
 

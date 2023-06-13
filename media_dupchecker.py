@@ -1,23 +1,12 @@
 import argparse
 import os
-import shutil
-import sys
-from typing import Any, Tuple
+from typing import Tuple
 
 import media_library as ml
 
 gb_no_action = False
 gb_verbose = False
 gb_write_csv = False
-
-
-def exit_error(*error_data: Any) -> None:
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -30,15 +19,6 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
-
-
-def move_file(target_path: str, target: ml.Entries) -> None:
-    if not os.path.exists(os.path.join(target_path, "m4a_Trash")) and not gb_no_action:
-        os.mkdir(os.path.join(target_path, "m4a_Trash"))
-    if gb_verbose:
-        print(f"move_file {os.path.join(target.path, target.name)}")
-    if not gb_no_action:
-        shutil.move(os.path.join(target.path, target.name), os.path.join(target_path, "m4a_Trash"))
 
 
 def check_target(target_path: str, master: list[ml.Entries], item: ml.Entries) -> Tuple[bool, int]:
@@ -74,14 +54,14 @@ def main() -> None:
     gb_no_action = args.no_action
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
-        exit_error(f"{args.master_input_path} not found and is required.")
+        ml.exit_error(f"{args.master_input_path} not found and is required.")
     master.sort(key=lambda x: getattr(x, "original_size"))
 
     if os.path.exists(target_path):
         target_list = ml.create_file_list(target_path)
         print(f"{len(target_list)} target files loaded.")
     else:
-        exit_error(f"{target_path} doesn't exist!")
+        ml.exit_error(f"{target_path} doesn't exist!")
 
     for item in target_list:
         found, result = check_target(target_path, master, item)
@@ -90,9 +70,9 @@ def main() -> None:
                 print(f"Master entry: {os.path.join(master[result].path, master[result].name)}")
                 print(f"Target file: {os.path.join(item.path, item.name)}")
             if args.move_original:
-                move_file(target_path, master[result])
+                ml.move_file(target_path, master[result], gb_verbose, gb_no_action)
             else:
-                move_file(target_path, item)
+                ml.move_file(target_path, item, gb_verbose, gb_no_action)
             if gb_verbose:
                 print()
 

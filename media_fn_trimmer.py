@@ -3,23 +3,15 @@ import bisect
 import operator
 import os
 import shutil
-import sys
 import typing
+
+import media_library as ml
 
 FileEntries = typing.NamedTuple("FileEntries", [("name", str), ("size", int)])
 
 gb_no_action = False
 gb_trim_number = False
 gb_verbose = False
-
-
-def exit_error(*error_data):
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args():
@@ -38,7 +30,7 @@ def rename_file(target_path, orig, name):
         print(f"Moving {os.path.join(target_path, orig.name)} -> {name}\n")
     if not gb_no_action:
         if os.path.exists(os.path.join(target_path, name)):
-            exit_error(f"{os.path.join(target_path, name)} already exists")
+            ml.exit_error(f"{os.path.join(target_path, name)} already exists")
         shutil.move(os.path.join(target_path, orig.name), os.path.join(target_path, name))
 
 

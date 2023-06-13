@@ -2,19 +2,8 @@ import argparse
 import bisect
 import operator
 import os
-import sys
-from typing import Any
 
 import media_library as ml
-
-
-def exit_error(*error_data: Any) -> None:
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -53,13 +42,13 @@ def main() -> None:
         backup_path = backup_path + "/"
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
-        exit_error(f"{args.master_input_path} not found and is required.")
+        ml.exit_error(f"{args.master_input_path} not found and is required.")
 
     if os.path.exists(backup_path):
         working = ml.create_file_list(backup_path)
         print(f"{len(working)} target files loaded.")
     else:
-        exit_error(f"{backup_path} doesn't exist!")
+        ml.exit_error(f"{backup_path} doesn't exist!")
 
     change_count = 0
     for item in working:

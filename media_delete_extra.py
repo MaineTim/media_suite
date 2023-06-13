@@ -2,21 +2,12 @@ import argparse
 import bisect
 import operator
 import os
-import sys
-from typing import Any
 
 import media_library as ml
+from media_library import Entries
+
 
 gb_change_made = False
-
-
-def exit_error(*error_data: Any) -> None:
-    for i, data in enumerate(error_data):
-        print(data, end=" ")
-        if i != len(error_data) - 1:
-            print(" : ", end=" ")
-    print("")
-    sys.exit()
 
 
 def get_args() -> argparse.Namespace:
@@ -56,6 +47,26 @@ def remove_master_entry(master: list[ml.Entries], entry_num: int) -> list[ml.Ent
     return master
 
 
+def process_entry(master: list[Entries], item: Entries, deleted_log: list[Entries]) -> None:
+
+    deleted_entry = None
+    found, result = ml.check_inode(master, item.ino)
+    if found:
+        remove_backups(master[result])
+        deleted_entry = master[result]
+        master = remove_master_entry(master, result)
+    else:
+        found, result = ml.check_inode(deleted_log, item.ino)
+        if found:
+            print(f"{item.name} already logged.")
+        else:
+            print(f"{item.name} not found in master list.")
+    if deleted_entry:
+        bisect.insort(deleted_log, deleted_entry, key=operator.attrgetter("current_size"))
+        print(f"Logging {item.name}")
+    return (master, deleted_log)
+
+
 def main() -> None:
     args = get_args()
 
@@ -71,30 +82,16 @@ def main() -> None:
     deleted_log = ml.read_master_file(args.deleted_input_path)
 
     if (master := ml.read_master_file(args.master_input_path)) == []:
-        exit_error(f"{args.master_input_path} not found and is required.")
+        ml.exit_error(f"{args.master_input_path} not found and is required.")
 
     if os.path.exists(args.delete_path):
         delete_list = ml.create_file_list(args.delete_path)
         print(f"{len(delete_list)} deleted files loaded.")
     else:
-        exit_error(f"{args.delete_path} doesn't exist!")
+        ml.exit_error(f"{args.delete_path} doesn't exist!")
 
     for item in delete_list:
-        deleted_entry = None
-        found, result = ml.check_inode(master, item.ino)
-        if found:
-            remove_backups(master[result])
-            deleted_entry = master[result]
-            master = remove_master_entry(master, result)
-        else:
-            found, result = ml.check_inode(deleted_log, item.ino)
-            if found:
-                print(f"{item.name} already logged.")
-            else:
-                print(f"{item.name} not found in master list.")
-        if deleted_entry:
-            bisect.insort(deleted_log, deleted_entry, key=operator.attrgetter("current_size"))
-            print(f"Logging {item.name}")
+        master, deleted_log = process_entry(master, item, deleted_log)
 
     if gb_change_made:
         ml.write_entries_file(master, master_output_path, args.write_csv)
