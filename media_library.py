@@ -1,4 +1,4 @@
-# Media Library Version 23-06-04-a
+# Media Library Version 23-06-13-a
 
 import bisect
 import copy
@@ -9,6 +9,8 @@ import operator
 import os
 import pathlib
 import pickle
+import shutil
+import sys
 from dataclasses import dataclass, field
 from typing import Any, Callable, Tuple
 
@@ -55,22 +57,42 @@ class Entries:
 
 @dataclass
 class SortPointer:
-    size: int = 0
+    key: Any
     index: int = 0
 
 
-def pointer_sort_database(database: list[Entries]) -> list[SortPointer]:
-    return [SortPointer(e.original_size, i) for i, e in enumerate(database)].sort(key=lambda x: getattr(x, "size"))
+def exit_error(*error_data: Any) -> None:
+    for i, data in enumerate(error_data):
+        print(data, end=" ")
+        if i != len(error_data) - 1:
+            print(" : ", end=" ")
+    print("")
+    sys.exit()
 
 
-def deepcopy_sort_database(database: list[Entries], key_str: str):
-    new_db = []
-    for i, e in enumerate(database):
-        entry = copy.deepcopy(e)
-        entry.data["index"] = i
-        new_db.append(entry)
-    new_db.sort(key=lambda x: getattr(x, key_str))
-    return new_db
+### Physical file operations
+
+
+def move_file(source: str, target: str, verbose=False, no_action=False) -> os.stat_result:
+    if verbose:
+        print(f"move_file {source} -> {target}")
+    if not no_action:
+        try:
+            shutil.move(source, target)
+        except OSError as e:
+            exit_error(f"{source} -> {target} :: File move failed: {e}")
+    return os.stat(target)
+
+
+def copy_file(source: str, target: str, verbose=False, no_action=False) -> os.stat_result:
+    if verbose:
+        print(f"copy_file {source} -> {target}")
+    if not no_action:
+        try:
+            shutil.copy2(source, target)
+        except OSError as e:
+            exit_error(f"File copy failed: {e}")
+    return os.stat(target)
 
 
 def checksum(filename: str, hash_factory: Callable[..., Any] = hashlib.md5, chunk_num_blocks: int = 128) -> Any:
@@ -79,6 +101,39 @@ def checksum(filename: str, hash_factory: Callable[..., Any] = hashlib.md5, chun
         for chunk in iter(lambda: f.read(chunk_num_blocks * h.block_size), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def file_duration(filename: str) -> float:
+    duration = 0
+    try:
+        info = ffmpeg.probe(filename)
+        duration = info["format"]["duration"]
+    except ffmpeg.Error as e:
+        print()
+        print(e.stderr)
+        print()
+        return -1
+    return float(duration)
+
+
+### Database operations
+
+
+def pointer_sort_database(database: list[Entries], sort_key: str = "original_size") -> list[SortPointer]:
+
+    pointers = [SortPointer(getattr(e, sort_key), i) for i, e in enumerate(database)]
+    pointers.sort(key=lambda x: getattr(x, "key"))
+    return pointers
+
+
+def deepcopy_sort_database(database: list[Entries], sort_key: str):
+    new_db = []
+    for i, e in enumerate(database):
+        entry = copy.deepcopy(e)
+        entry.data["index"] = i
+        new_db.append(entry)
+    new_db.sort(key=lambda x: getattr(x, sort_key))
+    return new_db
 
 
 def file_md_tag(filename: str) -> Tuple[str, str]:
@@ -103,17 +158,18 @@ def file_md_tag(filename: str) -> Tuple[str, str]:
     return (duration, size)
 
 
-def file_duration(filename: str) -> float:
-    duration = 0
-    try:
-        info = ffmpeg.probe(filename)
-        duration = info["format"]["duration"]
-    except ffmpeg.Error as e:
-        print()
-        print(e.stderr)
-        print()
-        return -1
-    return float(duration)
+# Return True, result if size and name match.
+def check_db(database: list[Entries], item: Entries) -> Tuple[bool, int]:
+    start = 0
+    while True:
+        found, result = check_current_size(database, item.current_size, start)
+        if found:
+            if database[result].name == item.name:
+                return True, result
+            else:
+                start = result
+        else:
+            return False, 0
 
 
 def check_inode(database: list[Entries], inode: int) -> Tuple[bool, int]:
@@ -128,6 +184,32 @@ def check_inode_in_path(database: list[Entries], path: str, inode: int) -> Tuple
         if (item.ino == inode) and (item.path == path):
             return (True, i)
     return (False, 0)
+
+
+# Find an entry based on original file size, using a sorted list of pointers to master.
+# Return True, resulting master index if size matches.
+def check_pointers_to_original_size(
+    database: list[Entries], pointers: list[SortPointer], size: int, start: int = 0
+) -> Tuple[bool, int]:
+    entry_size = operator.attrgetter("size")
+
+    if start > 0:
+        result = start + 1
+    else:
+        result = bisect.bisect_left(pointers, size, key=entry_size)
+    if result >= len(pointers) or pointers[result].size != size:
+        return (False, 0)
+    else:
+        return (True, pointers[result].index)
+
+
+def check_pointers_to_name(master: list[Entries], pointers: list[SortPointer], name: str):
+    key = operator.attrgetter("key")
+
+    result = bisect.bisect_left(pointers, name, key=key)
+    if result >= len(pointers):
+        return (False, "")
+    return (True, pointers[result].index)
 
 
 # Return True, result if size matches.
@@ -157,37 +239,6 @@ def check_original_size(database: list[Entries], size: int, start: int = 0) -> T
         return (False, 0)
     else:
         return (True, result)
-
-
-# Find an entry based on original file size, using a sorted list of pointers to master.
-# Return True, resulting master index if size matches.
-def check_original_size_pointers(
-    database: list[Entries], pointers: list[SortPointer], size: int, start: int = 0
-) -> Tuple[bool, int]:
-    entry_size = operator.attrgetter("size")
-
-    if start > 0:
-        result = start + 1
-    else:
-        result = bisect.bisect_left(pointers, size, key=entry_size)
-    if result >= len(pointers) or pointers[result].size != size:
-        return (False, 0)
-    else:
-        return (True, pointers[result].index)
-
-
-# Return True, result if size and name match.
-def check_db(database: list[Entries], item: Entries) -> Tuple[bool, int]:
-    start = 0
-    while True:
-        found, result = check_current_size(database, item.current_size, start)
-        if found:
-            if database[result].name == item.name:
-                return True, result
-            else:
-                start = result
-        else:
-            return False, 0
 
 
 def make_backup_path_entry(path: str, inode: int) -> str:
