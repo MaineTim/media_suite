@@ -166,8 +166,7 @@ def check_db(database: list[Entries], item: Entries) -> Tuple[bool, int]:
         if found:
             if database[result].name == item.name:
                 return True, result
-            else:
-                start = result
+            start = result
         else:
             return False, 0
 
@@ -188,9 +187,7 @@ def check_inode_in_path(database: list[Entries], path: str, inode: int) -> Tuple
 
 # Find an entry based on original file size, using a sorted list of pointers to master.
 # Return True, resulting master index if size matches.
-def check_pointers_to_original_size(
-    database: list[Entries], pointers: list[SortPointer], size: int, start: int = 0
-) -> Tuple[bool, int]:
+def check_pointers_to_original_size(pointers: list[SortPointer], size: int, start: int = 0) -> Tuple[bool, int]:
     entry_size = operator.attrgetter("size")
 
     if start > 0:
@@ -199,11 +196,10 @@ def check_pointers_to_original_size(
         result = bisect.bisect_left(pointers, size, key=entry_size)
     if result >= len(pointers) or pointers[result].size != size:
         return (False, 0)
-    else:
-        return (True, pointers[result].index)
+    return (True, pointers[result].index)
 
 
-def check_pointers_to_name(master: list[Entries], pointers: list[SortPointer], name: str):
+def check_pointers_to_name(pointers: list[SortPointer], name: str):
     key = operator.attrgetter("key")
 
     result = bisect.bisect_left(pointers, name, key=key)
@@ -222,8 +218,7 @@ def check_current_size(database: list[Entries], size: int, start: int = 0) -> Tu
         result = bisect.bisect_left(database, size, key=entry_size)
     if result >= len(database) or database[result].current_size != size:
         return (False, 0)
-    else:
-        return (True, result)
+    return (True, result)
 
 
 # Find an entry based on original file size, using a sorted copy of master.
@@ -237,8 +232,7 @@ def check_original_size(database: list[Entries], size: int, start: int = 0) -> T
         result = bisect.bisect_left(database, size, key=entry_size)
     if result >= len(database) or database[result].original_size != size:
         return (False, 0)
-    else:
-        return (True, result)
+    return (True, result)
 
 
 def make_backup_path_entry(path: str, inode: int) -> str:
