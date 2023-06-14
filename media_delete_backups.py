@@ -54,14 +54,16 @@ def delete_found_entry(target_path: str, filename: str, item: str, inode: int):
         return
 
 
-def process_deleted_entry(target_list: list[Entries], item: Entries, backup_path: str, target_path: str, inode: int):
-    if os.path.exists(backup_path):
+def process_deleted_entry(
+    target_list: list[Entries], item: Entries, backup_filepath: str, target_path: str, inode: int
+):
+    if os.path.exists(backup_filepath):
         # Found a matching name, if inode okay, then remove it.
         if gb_verbose:
-            print(f"Found matching filename {backup_path}")
-        backup_stat = os.stat(backup_path)
+            print(f"Found matching filename {backup_filepath}")
+        backup_stat = os.stat(backup_filepath)
         if int(backup_stat.st_ino) == inode:
-            remove_file(backup_path)
+            remove_file(backup_filepath)
         else:
             if gb_verbose:
                 print(f"Inodes don't match! Actual: {backup_stat.st_ino} Recorded:{inode}")
@@ -72,23 +74,24 @@ def process_deleted_entry(target_list: list[Entries], item: Entries, backup_path
             delete_found_entry(target_path, filename, item, inode)
         else:
             if gb_verbose:
-                print(f"No backup found: {backup_path}")
+                print(f"No backup found: {backup_filepath}")
 
 
-def process_deleted(deleted: list[Entries], target_path: str, target_list: list[Entries]) -> None:
+def process_deleted_list(deleted: list[Entries], target_path: str, target_list: list[Entries]) -> None:
     for item in deleted[:]:
-        for whole_path in item.paths:
-            if whole_path == "":
-                print(f"{os.path.join(item.path, item.name)}: No backup!")
+        for encoded_backup_path in item.paths:
+            if encoded_backup_path == "":
+                if gb_verbose:
+                    print(f"{os.path.join(item.path, item.name)}: No backup!")
                 continue
             if gb_verbose:
-                print(f"Checking {whole_path}")
-            path, inode = ml.split_backup_path(whole_path)
-            if path != target_path.rstrip("/"):
+                print(f"Checking {encoded_backup_path}")
+            backup_path, inode = ml.split_backup_path(encoded_backup_path)
+            if backup_path != target_path.rstrip("/"):
                 continue
-            backup_path = os.path.join(path, item.name)
-            if os.path.exists(path):
-                process_deleted_entry(target_list, item, backup_path, target_path, inode)
+            if os.path.exists(backup_path):
+                backup_filepath = os.path.join(backup_path, item.name)
+                process_deleted_entry(target_list, item, backup_filepath, target_path, inode)
 
 
 def main() -> None:
@@ -112,7 +115,7 @@ def main() -> None:
     else:
         ml.exit_error(f"{target_path} doesn't exist!")
 
-    process_deleted(deleted, target_path, target_list)
+    process_deleted_list(deleted, target_path, target_list)
 
 
 if __name__ == "__main__":

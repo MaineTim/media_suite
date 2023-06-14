@@ -6,7 +6,6 @@ import os
 import media_library as ml
 from media_library import Entries
 
-
 gb_change_made = False
 
 
