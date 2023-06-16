@@ -1,4 +1,4 @@
-# Media Library Version 23-06-13-a
+# Media Library Version 23-06-16-a
 
 import bisect
 import copy
@@ -73,7 +73,7 @@ def exit_error(*error_data: Any) -> None:
 ### Physical file operations
 
 
-def move_file(source: str, target: str, verbose=False, no_action=False) -> os.stat_result:
+def move_file(source: str, target: str, verbose=False, no_action=False) -> None:
     if verbose:
         print(f"move_file {source} -> {target}")
     if not no_action:
@@ -81,10 +81,10 @@ def move_file(source: str, target: str, verbose=False, no_action=False) -> os.st
             shutil.move(source, target)
         except OSError as e:
             exit_error(f"{source} -> {target} :: File move failed: {e}")
-    return os.stat(target)
+    return
 
 
-def copy_file(source: str, target: str, verbose=False, no_action=False) -> os.stat_result:
+def copy_file(source: str, target: str, verbose=False, no_action=False) -> None:
     if verbose:
         print(f"copy_file {source} -> {target}")
     if not no_action:
@@ -92,7 +92,7 @@ def copy_file(source: str, target: str, verbose=False, no_action=False) -> os.st
             shutil.copy2(source, target)
         except OSError as e:
             exit_error(f"File copy failed: {e}")
-    return os.stat(target)
+    return
 
 
 def checksum(filename: str, hash_factory: Callable[..., Any] = hashlib.md5, chunk_num_blocks: int = 128) -> Any:

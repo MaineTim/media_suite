@@ -60,19 +60,24 @@ def main() -> None:
     if os.path.exists(target_path):
         target_list = ml.create_file_list(target_path)
         print(f"{len(target_list)} target files loaded.")
+        trash_path = os.path.join(target_path, "m4a_Trash")
     else:
         ml.exit_error(f"{target_path} doesn't exist!")
 
     for item in target_list:
         found, result = check_target(target_path, master, item)
         if found:
+            if not os.path.exists(trash_path) and not gb_no_action:
+                os.mkdir(trash_path)
             if gb_verbose:
                 print(f"Master entry: {os.path.join(master[result].path, master[result].name)}")
                 print(f"Target file: {os.path.join(item.path, item.name)}")
             if args.move_original:
-                ml.move_file(target_path, master[result], gb_verbose, gb_no_action)
+                ml.move_file(
+                    os.path.join(master[result].path, master[result].name), trash_path, gb_verbose, gb_no_action
+                )
             else:
-                ml.move_file(target_path, item, gb_verbose, gb_no_action)
+                ml.move_file(os.path.join(item.path, item.name), trash_path, gb_verbose, gb_no_action)
             if gb_verbose:
                 print()
 
