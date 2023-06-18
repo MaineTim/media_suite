@@ -18,6 +18,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="Trim filenames of target phrase.")
     parser.add_argument("target_phrase", nargs=1)
     parser.add_argument("target_path", nargs=1)
+    parser.add_argument("-i", action="store_true", default=False, dest="add_index", help="Add index number.")
     parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument("-t", action="store_true", default=False, dest="trim_number", help="Trim numbers.")
     parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose")
@@ -76,6 +77,14 @@ def find_phrase(item, phrase, anchor):
     return -1
 
 
+def add_numeric_index(name: str, index: int):
+
+    index += 1
+    loc = name.rfind(' - ')
+    if loc == -1: loc = len(name) - 1
+    return (index, name[:loc] + f" {index:03}" + name[loc:])
+
+
 def main():
     global gb_no_action
     global gb_trim_number
@@ -86,12 +95,15 @@ def main():
     gb_verbose = args.verbose
     gb_no_action = args.no_action
     gb_trim_number = args.trim_number
+    index = 0
 
     target = create_file_list(target_path)
 
     for item in target:
         if (ind := find_phrase(item.name, args.target_phrase[0], ".mp4")) != -1:
             new_name = item.name[:ind] + ".mp4"
+            if args.add_index:
+                index, new_name = add_numeric_index(new_name, index)
             rename_file(target_path, item, new_name)
 
 
