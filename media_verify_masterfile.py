@@ -143,32 +143,40 @@ def main() -> None:
                         changed = True
 
             for j, whole_path in enumerate(item.paths[:]):
-                path, inode = ml.split_backup_path(whole_path)
-                backup_path = os.path.join(path, item.name)
-                if os.path.exists(path):
-                    if os.path.exists(backup_path):
-                        backup_stat = os.stat(backup_path)
-                        # Backup inode doesn't match.
-                        if backup_stat.st_ino != inode:
-                            print(f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}.")
-                            if args.fix_errors:
-                                if get_reply("Fix this error?"):
-                                    master[i].paths[j] = f"{path}/[{backup_stat.st_ino}]"
-                                    changed = True
-                            continue
-                        # Backup size doesn't match.
-                        if backup_stat.st_size != item.original_size:
-                            print(
-                                f"{backup_path} backup has changed size from {item.original_size} to {backup_stat.st_size}."
-                            )
-                            continue
-                    else:
-                        print(f"{backup_path} backup doesn't exist. {item.backups} backups listed.")
-                        if args.fix_errors:
-                            master[i].paths.remove(whole_path)
+                if item.paths.count(whole_path) > 1:
+                    print(f"Multiple entries for {item.name}: {whole_path}")
+                    if args.fix_errors:
+                        if get_reply("Fix this error?"):
+                            del(master[i].paths[j])
                             master[i].backups -= 1
                             changed = True
-                        continue
+                else:
+                    path, inode = ml.split_backup_path(whole_path)
+                    backup_path = os.path.join(path, item.name)
+                    if os.path.exists(path):
+                        if os.path.exists(backup_path):
+                            backup_stat = os.stat(backup_path)
+                            # Backup inode doesn't match.
+                            if backup_stat.st_ino != inode:
+                                print(f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}.")
+                                if args.fix_errors:
+                                    if get_reply("Fix this error?"):
+                                        master[i].paths[j] = f"{path}/[{backup_stat.st_ino}]"
+                                        changed = True
+                                continue
+                            # Backup size doesn't match.
+                            if backup_stat.st_size != item.original_size:
+                                print(
+                                    f"{backup_path} backup has changed size from {item.original_size} to {backup_stat.st_size}."
+                                )
+                                continue
+                        else:
+                            print(f"{backup_path} backup doesn't exist. {item.backups} backups listed.")
+                            if args.fix_errors:
+                                master[i].paths.remove(whole_path)
+                                master[i].backups -= 1
+                                changed = True
+                            continue
             if master[i].backups < 1 and len(master[i].paths) < 1:
                 print(f"Warning: {target_path} has no valid backups.")
 
