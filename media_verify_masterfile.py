@@ -16,6 +16,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-f", action="store_true", default=False, dest="fix_errors", help="Fix errors.")
     parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
+    parser.add_argument("-s", action="store_true", default=False, dest="suppress_backup_warning", help="Suppress no valid backup warning.")
     parser.add_argument("-w", action="store_true", default=False, dest="write_file", help="Write master_filelist.")
     args = parser.parse_args()
     return args
@@ -97,7 +98,7 @@ def main() -> None:
         # Create a list of inodes, and check that there are no duplicates (multiple entries pointing to one file).
         inodes = sorted([(i, item.ino) for i, item in enumerate(master)], key=lambda x: x[1])
         for i in range(len(inodes) - 1):
-            if inodes[i][1] == inodes[i + 1][1]:
+            if inodes[i][1] == inodes[i + 1][1] and master[inodes[i][0]].path == master[inodes[i + 1][0]].path:
                 item_a = os.path.join(master[inodes[i][0]].path, master[inodes[i][0]].name)
                 item_b = os.path.join(master[inodes[i + 1][0]].path, master[inodes[i + 1][0]].name)
                 print(f"{item_a}")
@@ -178,7 +179,8 @@ def main() -> None:
                                 changed = True
                             continue
             if master[i].backups < 1 and len(master[i].paths) < 1:
-                print(f"Warning: {target_path} has no valid backups.")
+                if not args.suppress_backup_warning:
+                    print(f"Warning: {target_path} has no valid backups.")
 
         print(f"{len(master)} records checked.")
 
