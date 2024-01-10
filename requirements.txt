@@ -1,0 +1,14 @@
+ahocorasick_rs
+appdirs
+build
+click
+ffmpeg-python
+future
+getch
+numpy
+opencv-python-headless
+packaging
+pip-tools
+pyproject_hooks
+scenedetect
+tqdm
