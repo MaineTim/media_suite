@@ -9,6 +9,8 @@ import media_library as ml
 
 import pdb
 
+g_actor_names = []
+
 def get_args():
     parser = argparse.ArgumentParser(description="Search for entries.")
 #    parser.add_argument("target_strings", nargs="+")
@@ -61,9 +63,18 @@ def word_index(item_name: str, result: tuple[int, int, int]):
     return(start, end)
 
 
-def process_first_name(first_name: str, item_name: str, end: int):
-    next_word = item_name[end:].split()[0]
-    return (first_name + " " + next_word)
+def process_first_name(first_name: str, item_name: str, end: int) -> str:
+#    pdb.set_trace()
+#    last_name = re.split(r" |,|-", item_name[end:])
+#    print(last_name)
+    last_name = item_name[end:].split()[0].strip()
+    full_name = f"{first_name} {last_name}".strip().title()
+    if full_name[-1] is "," or full_name[-1] is "-":
+        full_name = full_name[:-1].strip()
+    print(full_name)
+    if full_name in g_actor_names:
+        return full_name
+    return ""
 
 
 def search_names(master, first_names, args):
@@ -89,12 +100,13 @@ def search_names(master, first_names, args):
             for result in results:
                 start, end = word_index(item.name, result)
                 if len(first_names[result[0]]) == end - start:
-                    tokens = tokens + " " + process_first_name(first_names[result[0]], item.name, end)
-                    # tokens = tokens + " " + first_names[result[0]]
-            # tokens = "".join([names[x] + " " for x in (list(zip(*results))[0])])
+                    full_name = process_first_name(first_names[result[0]], item.name, end)
+                    if full_name is not "":
+                        tokens = tokens + full_name + ", "
             print(item.name)
-            print(tokens)
-#            if re.search(target_regex, tokens):
+            print(f"Listed: {tokens}")
+            print()
+    #            if re.search(target_regex, tokens):
 #                file_indexes.append(i)
     return file_indexes
 
@@ -109,12 +121,12 @@ def read_first_names_file(name_file_input_path: str) -> list[str]:
 
 
 def read_actor_names_file(actor_names_file_input_path: str) -> list[str]:
-    actor_names=[]
     if os.path.exists(actor_names_file_input_path):
         with open(actor_names_file_input_path, "r") as f:
-            actor_names = [name.strip() for name in f]
-        print(f"{len(actor_names)} records found.")
-    return actor_names
+            for name in f:
+                g_actor_names.append(name.strip())
+        print(f"{len(g_actor_names)} records found.")
+    return g_actor_names
 
 
 def main():
@@ -126,24 +138,10 @@ def main():
     if (first_names := read_first_names_file(args.first_names_file_input_path)) == []:
         ml.exit_error(f"{args.first_names_file_input_path} not found and is required.")
 
-    if (actor_names := read_actor_names_file(args.actor_names_file_input_path)) == []:
+    if (g_actor_names := read_actor_names_file(args.actor_names_file_input_path)) == []:
         ml.exit_error(f"{args.actor_names_file_input_path} not found and is required.")
  
     search_names(master, first_names, args)
-    # results = search_strings(master, args)
-    # entries = [master[res] for res in results]
-    # if args.sort_time:
-    #     entries.sort(key=lambda x: float(x.original_duration))
-    # else:
-    #     entries.sort(key=lambda x: x.name)
-    # if args.print_path:
-    #     for ent in entries:
-    #         print(
-    #             f'{time.strftime("%H:%M:%S", time.gmtime(float(ent.original_duration)))} - {os.path.join(ent.path, ent.name)}'
-    #         )
-    # else:
-    #     for ent in entries:
-    #         print(f'{time.strftime("%H:%M:%S", time.gmtime(float(ent.original_duration)))} - {ent.name}')
 
 
 if __name__ == "__main__":
