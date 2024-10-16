@@ -63,18 +63,17 @@ def word_index(item_name: str, result: tuple[int, int, int]):
     return(start, end)
 
 
-def process_first_name(first_name: str, item_name: str, end: int) -> str:
-#    pdb.set_trace()
-#    last_name = re.split(r" |,|-", item_name[end:])
-#    print(last_name)
+def get_full_name(first_name: str, item_name: str, end: int) -> str:
     last_name = item_name[end:].split()[0].strip()
+    if last_name.lower() in ["de", "del", "la", "st", "von", ]:
+        last_name = last_name + " " + item_name[end:].split()[1].strip()
     full_name = f"{first_name} {last_name}".strip().title()
-    if full_name[-1] is "," or full_name[-1] is "-":
+    #if full_name[-1] == "," or full_name[-1] == "-" or full_name[-1] == "]":
+    if full_name[-1] in ",-]).":
         full_name = full_name[:-1].strip()
-    print(full_name)
     if full_name in g_actor_names:
         return full_name
-    return ""
+    return f"###{full_name}"
 
 
 def search_names(master, first_names, args):
@@ -87,7 +86,8 @@ def search_names(master, first_names, args):
         ah_search = ah.AhoCorasick(list(map(lambda x: x.lower(), first_names)), matchkind=ah.MatchKind.LeftmostLongest)
     else:
         ah_search = ah.AhoCorasick(first_names, matchkind=ah.MatchKind.LeftmostLongest)
-    file_indexes = []
+    name_refs = {}
+    unlisted_name_refs = {}
     for i, item in enumerate(master):
         if args.case_insensitive:
             results = ah_search.find_matches_as_indexes(item.name.lower())
@@ -100,22 +100,24 @@ def search_names(master, first_names, args):
             for result in results:
                 start, end = word_index(item.name, result)
                 if len(first_names[result[0]]) == end - start:
-                    full_name = process_first_name(first_names[result[0]], item.name, end)
-                    if full_name is not "":
-                        tokens = tokens + full_name + ", "
-            print(item.name)
-            print(f"Listed: {tokens}")
-            print()
-    #            if re.search(target_regex, tokens):
-#                file_indexes.append(i)
-    return file_indexes
+                    full_name = get_full_name(first_names[result[0]], item.name, end)
+                    if full_name[0:3] != "###":
+                        if full_name not in name_refs.keys():
+                            name_refs[full_name] = []
+                        name_refs[full_name].append(i)
+                    else:
+                        full_name = full_name[3:]
+                        if full_name not in unlisted_name_refs.keys():
+                            unlisted_name_refs[full_name] = []
+                        unlisted_name_refs[full_name].append(i)
+    return name_refs, unlisted_name_refs
 
 
 def read_first_names_file(name_file_input_path: str) -> list[str]:
     first_names=[]
     if os.path.exists(name_file_input_path):
         with open(name_file_input_path, "r") as f:
-            first_names = [name.strip() for name in f]
+            first_names = [name.strip().title() for name in f]
         print(f"{len(first_names)} records found.")
     return first_names
 
@@ -124,7 +126,7 @@ def read_actor_names_file(actor_names_file_input_path: str) -> list[str]:
     if os.path.exists(actor_names_file_input_path):
         with open(actor_names_file_input_path, "r") as f:
             for name in f:
-                g_actor_names.append(name.strip())
+                g_actor_names.append(name.strip().title())
         print(f"{len(g_actor_names)} records found.")
     return g_actor_names
 
@@ -141,7 +143,14 @@ def main():
     if (g_actor_names := read_actor_names_file(args.actor_names_file_input_path)) == []:
         ml.exit_error(f"{args.actor_names_file_input_path} not found and is required.")
  
-    search_names(master, first_names, args)
+    name_refs, unlisted_name_refs = search_names(master, first_names, args)
+    print("Listed:")
+#    for name in sorted(name_refs.keys()):
+#        print(f"{name}: {len(name_refs[name])}")
+    print("Unlisted:")
+    for name in sorted(unlisted_name_refs.keys()):
+        if len(unlisted_name_refs[name]) >= 6 and " " in name:
+            print(f"{name}: {len(unlisted_name_refs[name])}")
 
 
 if __name__ == "__main__":
