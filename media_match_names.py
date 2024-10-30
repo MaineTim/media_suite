@@ -62,25 +62,35 @@ def word_index(item_name: str, result: tuple[int, int, int]):
     return(start, end)
 
 
-def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str]) -> str:
-    last_name = item_name[end:].split()[0].strip()
-    if last_name.lower() in ["de", "del", "la", "st", "von", ]:
-        last_name = last_name + " " + item_name[end:].split()[1].strip()
+def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str], mid_names: list[str]) -> str:
+    # if first_name.lower() == "anna": pdb.set_trace()
+    element = 1
+    name_element = item_name[end:].split()[0].strip()
+    last_name = name_element.lower()
+    while name_element.title() in mid_names:
+        name_element = item_name[end:].split()[element].strip()
+        last_name = last_name + " " + name_element
+        element += 1
+        print(f"{element}: {name_element} = {last_name}")
     full_name = f"{first_name} {last_name}".strip().title()
-    #if full_name[-1] == "," or full_name[-1] == "-" or full_name[-1] == "]":
-    if full_name[-1] in ",-]).":
+    while full_name[-1] in ",-]_).":
         full_name = full_name[:-1].strip()
     if full_name in full_names:
         return full_name
     return f"###{full_name}"
 
 
+def get_alias(aliases, full_name:str):
+    if full_name in aliases.keys():
+        return aliases[full_name]
+    return full_name
+
+
 # def get_names_from_item(item: str):
 
 
 
-
-def search_names(master: list[ml.Entries], first_names: list[str], full_names: list[str], ah_search, args):
+def search_names(master: list[ml.Entries], first_names: list[str], full_names: list[str], aliases, mid_names: list[str], ah_search, args):
     """
     Search each entry in master, finding hits against a list of targets.
     Then match that list to a regex, and return the list of indexes to entries that match.
@@ -100,14 +110,16 @@ def search_names(master: list[ml.Entries], first_names: list[str], full_names: l
             for result in results:
                 start, end = word_index(item.name, result)
                 if len(first_names[result[0]]) == end - start:
-                    full_name = get_full_name(first_names[result[0]], item.name, end, full_names)
+                    full_name = get_full_name(first_names[result[0]], item.name, end, full_names, mid_names)
                     if full_name[0:3] != "###":
+                        full_name = get_alias(aliases, full_name)
                         if full_name not in name_refs.keys():
                             name_refs[full_name] = []
                         if i not in name_refs[full_name]:  
                             name_refs[full_name].append(i)
                     else:
                         full_name = full_name[3:]
+                        full_name = get_alias(aliases, full_name)
                         if full_name not in unlisted_name_refs.keys():
                             unlisted_name_refs[full_name] = []
                         if i not in unlisted_name_refs[full_name]:
@@ -134,6 +146,7 @@ def prepare_name_search(first_names_file_input_path: str, full_names_file_input_
     def read_full_names_file(full_names_file_input_path: str) -> list[str]:
         full_names = []
         aliases = {}
+        mid_names = ["De", "Del", "La", "St", "Von", ]
         if os.path.exists(full_names_file_input_path):
             with open(full_names_file_input_path, "r") as f:
                 for name in f:
@@ -142,15 +155,20 @@ def prepare_name_search(first_names_file_input_path: str, full_names_file_input_
                         name = name[:x].strip().title()
                         aliases[name] = alias
                     full_names.append(name.strip().title())
+                    split_name = full_names[-1].split()
+                    if (length:= len(split_name)) > 2:
+                        for count in range(1, length - 1):
+                            if split_name[count] not in mid_names:
+                                mid_names.append(split_name[count])
             print(f"{len(full_names)} records found.")
         else:
             ml.exit_error(f"{args.first_names_file_input_path} not found and is required.")
-        return full_names, aliases
+        return full_names, aliases, mid_names
 
     first_names = read_first_names_file(first_names_file_input_path)
-    full_names, aliases = read_full_names_file(full_names_file_input_path)
+    full_names, aliases, mid_names = read_full_names_file(full_names_file_input_path)
     # Check through the first names in full_names and make sure they in the first_name list.
-    full_first_names = (name[0] for name in full_names)   
+    full_first_names = (name.split()[0] for name in full_names)   
     for first_name in full_first_names:
         if first_name not in first_names:
             first_names.append(first_name)
@@ -160,7 +178,7 @@ def prepare_name_search(first_names_file_input_path: str, full_names_file_input_
     else:
         ah_search = ah.AhoCorasick(first_names, matchkind=ah.MatchKind.LeftmostLongest)
  
-    return(first_names, full_names, aliases, ah_search)
+    return(first_names, full_names, aliases, mid_names, ah_search)
 
 
 def main():
@@ -170,17 +188,17 @@ def main():
     if (master := ml.read_master_file(args.master_input_path)) == []:
         ml.exit_error(f"{args.master_input_path} not found and is required.")
 
-    first_names, full_names, aliases, ah_search = prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
+    first_names, full_names, aliases, mid_names, ah_search = prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
 
-#    import pdb; pdb.set_trace()
+    # pdb.set_trace()
 
-    name_refs, unlisted_name_refs = search_names(master, first_names, full_names, ah_search, args)
+    name_refs, unlisted_name_refs = search_names(master, first_names, full_names, aliases, mid_names, ah_search, args)
     print("Listed:")
     for name in sorted(name_refs.keys()):
         print(f"{name}: {len(name_refs[name])}")
     print("Unlisted:")
     for name in sorted(unlisted_name_refs.keys()):
-        if len(unlisted_name_refs[name]) >= 2 and " " in name:
+        if len(unlisted_name_refs[name]) >= 1 and " " in name:
             print(f"{name}: {len(unlisted_name_refs[name])}")
 
 
