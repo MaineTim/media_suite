@@ -349,3 +349,68 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
                 for item in master
             )
     print(f"{len(master)} records written.")
+
+
+# Name Search Functions
+
+def word_index(item_name: str, result: tuple[int, int, int]):
+    """ 
+    Return the full start and end indexes for a potential partial match.
+    """
+    start = result[1]
+    end = result[2]
+    while (start - 1 > 0) and item_name[start - 1].isalpha():
+        start -= 1
+    while end < len(item_name) and item_name[end].isalpha():
+        end += 1
+    return(start, end)
+
+
+def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str], mid_names: list[str]) -> str:
+    """
+    Return a "full name" based on a first name match in an entry. Tries to account for multi-part last names.
+    """
+    element = 1
+    name_element = item_name[end:].split()[0].strip()
+    last_name = name_element.lower()
+    while name_element.title() in mid_names:
+        name_element = item_name[end:].split()[element].strip()
+        last_name = last_name + " " + name_element
+        element += 1
+    full_name = f"{first_name} {last_name}".strip().title()
+    while full_name[-1] in ",-]_).":
+        full_name = full_name[:-1].strip()
+    return full_name
+
+
+def get_alias(aliases, full_name:str):
+    
+    if full_name in aliases.keys():
+        return aliases[full_name]
+    return full_name
+
+
+def search_names(item: str, ns: NameSearch, args):
+    """
+    Return two lists: name matches in the name database, and unmatched "names".
+    """
+    listed = []
+    unlisted = []
+    if args.case_insensitive:
+        results = ns.ah_search.find_matches_as_indexes(item.name.lower())
+    else:
+        results = ns.ah_search.find_matches_as_indexes(item.name)
+    if results != []:
+        results.sort(key=lambda x: x[0])
+        for result in results:
+            start, end = word_index(item.name, result)
+            if len(ns.first_names[result[0]]) == end - start:
+                full_name = get_full_name(ns.first_names[result[0]], item.name, end, ns.full_names, ns.mid_names)
+                full_name = get_alias(ns.aliases, full_name)
+                if full_name in (ns.full_names):
+                    listed.append(full_name)   
+                else:
+                    unlisted.append(full_name)
+    return(listed, unlisted)
+
+
