@@ -16,6 +16,9 @@ from typing import Any, Callable, Tuple
 
 import ffmpeg
 
+import ahocorasick_rs as ah
+
+
 # Obsolete entry schema.
 # FileEntries = typing.NamedTuple(
 #     "FileEntries",
@@ -353,6 +356,72 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
 
 # Name Search Functions
 
+def read_first_names_file(first_names_file_input_path: str) -> list[str]:
+    first_names = []
+    if os.path.exists(first_names_file_input_path):
+        with open(first_names_file_input_path, "r") as f:
+            first_names = [name.strip().title() for name in f]
+        print(f"{len(first_names)} records found.")
+    else:
+        exit_error(f"{args.first_names_file_input_path} not found and is required.")
+    return first_names
+
+
+def read_full_names_file(full_names_file_input_path: str) -> list[str]:
+    full_names = []
+    aliases = {}
+    mid_names = [
+        "De",
+        "Del",
+        "La",
+        "St",
+        "Von",
+    ]
+    if os.path.exists(full_names_file_input_path):
+        with open(full_names_file_input_path, "r") as f:
+            for name in f:
+                if (x := name.find("-->")) != -1:
+                    alias = name[x + 3 :].strip().title()
+                    name = name[:x].strip().title()
+                    aliases[name] = alias
+                full_names.append(name.strip().title())
+                split_name = full_names[-1].split()
+                if (length := len(split_name)) > 2:
+                    for count in range(1, length - 1):
+                        if split_name[count] not in mid_names:
+                            mid_names.append(split_name[count])
+        print(f"{len(full_names)} records found.")
+    else:
+        exit_error(f"{args.first_names_file_input_path} not found and is required.")
+    return full_names, aliases, mid_names
+
+
+def prepare_name_search(
+        first_names_file_input_path: str, full_names_file_input_path: str, case_insensitive: bool = True, print_results: bool = False):
+    """
+    Load the first_name and full_name files, adding any first names from full_names to first_names.
+    Add any alternate names to aliases dict.
+    Create the search object.
+    """
+
+    ns = NameSearch()
+    ns.first_names = read_first_names_file(first_names_file_input_path)
+    ns.full_names, ns.aliases, ns.mid_names = read_full_names_file(full_names_file_input_path)
+    # Check through the first names in full_names and make sure they in the first_name list.
+    full_first_names = (name.split()[0] for name in ns.full_names)
+    for first_name in full_first_names:
+        if first_name not in ns.first_names:
+            ns.first_names.append(first_name)
+    sorted(ns.first_names)
+    if case_insensitive:
+        ns.ah_search = ah.AhoCorasick(
+            list(map(lambda x: x.lower(), ns.first_names)), matchkind=ah.MatchKind.LeftmostLongest
+        )
+    else:
+        ns.ah_search = ah.AhoCorasick(ns.first_names, matchkind=ah.MatchKind.LeftmostLongest)
+
+    return ns
+
 
 def word_index(item_name: str, result: tuple[int, int, int]):
     """
@@ -391,25 +460,27 @@ def get_alias(aliases, full_name: str):
     return full_name
 
 
-def search_names(item: str, ns: NameSearch, args):
+def search_names(item_title: str, ns: NameSearch, args):
     """
     Return two lists: name matches in the name database, and unmatched "names".
     """
     listed = []
     unlisted = []
     if args.case_insensitive:
-        results = ns.ah_search.find_matches_as_indexes(item.name.lower())
+        results = ns.ah_search.find_matches_as_indexes(item_title.lower())
     else:
-        results = ns.ah_search.find_matches_as_indexes(item.name)
+        results = ns.ah_search.find_matches_as_indexes(item_title)
     if results != []:
         results.sort(key=lambda x: x[0])
         for result in results:
-            start, end = word_index(item.name, result)
+            start, end = word_index(item_title, result)
             if len(ns.first_names[result[0]]) == end - start:
-                full_name = get_full_name(ns.first_names[result[0]], item.name, end, ns.full_names, ns.mid_names)
+                full_name = get_full_name(ns.first_names[result[0]], item_title, end, ns.full_names, ns.mid_names)
                 full_name = get_alias(ns.aliases, full_name)
                 if full_name in (ns.full_names):
-                    listed.append(full_name)
+                    if full_name not in listed:
+                        listed.append(full_name)
                 else:
-                    unlisted.append(full_name)
+                    if full_name not in unlisted:
+                        unlisted.append(full_name)
     return (listed, unlisted)
