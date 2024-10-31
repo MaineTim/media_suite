@@ -353,8 +353,9 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
 
 # Name Search Functions
 
+
 def word_index(item_name: str, result: tuple[int, int, int]):
-    """ 
+    """
     Return the full start and end indexes for a potential partial match.
     """
     start = result[1]
@@ -363,7 +364,7 @@ def word_index(item_name: str, result: tuple[int, int, int]):
         start -= 1
     while end < len(item_name) and item_name[end].isalpha():
         end += 1
-    return(start, end)
+    return (start, end)
 
 
 def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str], mid_names: list[str]) -> str:
@@ -383,8 +384,8 @@ def get_full_name(first_name: str, item_name: str, end: int, full_names: list[st
     return full_name
 
 
-def get_alias(aliases, full_name:str):
-    
+def get_alias(aliases, full_name: str):
+
     if full_name in aliases.keys():
         return aliases[full_name]
     return full_name
@@ -408,9 +409,7 @@ def search_names(item: str, ns: NameSearch, args):
                 full_name = get_full_name(ns.first_names[result[0]], item.name, end, ns.full_names, ns.mid_names)
                 full_name = get_alias(ns.aliases, full_name)
                 if full_name in (ns.full_names):
-                    listed.append(full_name)   
+                    listed.append(full_name)
                 else:
                     unlisted.append(full_name)
-    return(listed, unlisted)
-
-
+    return (listed, unlisted)

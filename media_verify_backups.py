@@ -87,7 +87,7 @@ def main() -> None:
             if get_reply("Delete backup file?"):
                 os.unlink(os.path.join(item.path, item.name))
                 unlink_count += 1
- 
+
     print(f"{unlink_count} files unlinked.")
 
 

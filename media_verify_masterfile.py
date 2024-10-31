@@ -16,7 +16,13 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-f", action="store_true", default=False, dest="fix_errors", help="Fix errors.")
     parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument("-s", action="store_true", default=False, dest="suppress_backup_warning", help="Suppress no valid backup warning.")
+    parser.add_argument(
+        "-s",
+        action="store_true",
+        default=False,
+        dest="suppress_backup_warning",
+        help="Suppress no valid backup warning.",
+    )
     parser.add_argument("-w", action="store_true", default=False, dest="write_file", help="Write master_filelist.")
     args = parser.parse_args()
     return args
@@ -148,7 +154,7 @@ def main() -> None:
                     print(f"Multiple entries for {item.name}: {whole_path}")
                     if args.fix_errors:
                         if get_reply("Fix this error?"):
-                            del(master[i].paths[j])
+                            del master[i].paths[j]
                             master[i].backups -= 1
                             changed = True
                 else:

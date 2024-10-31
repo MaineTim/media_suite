@@ -80,8 +80,9 @@ def find_phrase(item, phrase, anchor):
 def add_numeric_index(name: str, index: int):
 
     index += 1
-    loc = name.rfind(' - ')
-    if loc == -1: loc = len(name) - 1
+    loc = name.rfind(" - ")
+    if loc == -1:
+        loc = len(name) - 1
     return (index, name[:loc] + f" {index:03}" + name[loc:])
 
 
