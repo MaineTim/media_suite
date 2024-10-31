@@ -11,6 +11,7 @@ import pdb
 
 
 def get_args():
+    
     parser = argparse.ArgumentParser(description="Search for entries.")
 #    parser.add_argument("target_strings", nargs="+")
     parser.add_argument("-m", type=str, dest="master_input_path", default="master_filelist")
@@ -53,6 +54,7 @@ def parse_target_strings(args):
 
 
 def word_index(item_name: str, result: tuple[int, int, int]):
+    
     start = result[1]
     end = result[2]
     while (start - 1 > 0) and item_name[start - 1].isalpha():
@@ -63,7 +65,7 @@ def word_index(item_name: str, result: tuple[int, int, int]):
 
 
 def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str], mid_names: list[str]) -> str:
-    # if first_name.lower() == "anna": pdb.set_trace()
+    
     element = 1
     name_element = item_name[end:].split()[0].strip()
     last_name = name_element.lower()
@@ -74,22 +76,39 @@ def get_full_name(first_name: str, item_name: str, end: int, full_names: list[st
     full_name = f"{first_name} {last_name}".strip().title()
     while full_name[-1] in ",-]_).":
         full_name = full_name[:-1].strip()
-    if full_name in full_names:
-        return full_name
-    return f"###{full_name}"
+    return full_name
 
 
 def get_alias(aliases, full_name:str):
+    
     if full_name in aliases.keys():
         return aliases[full_name]
     return full_name
 
 
-# def get_names_from_item(item: str):
+def search_names(item: str, ns: ml.NameSearch, args):
+
+    listed = []
+    unlisted = []
+    if args.case_insensitive:
+        results = ns.ah_search.find_matches_as_indexes(item.name.lower())
+    else:
+        results = ns.ah_search.find_matches_as_indexes(item.name)
+    if results != []:
+        results.sort(key=lambda x: x[0])
+        for result in results:
+            start, end = word_index(item.name, result)
+            if len(ns.first_names[result[0]]) == end - start:
+                full_name = get_full_name(ns.first_names[result[0]], item.name, end, ns.full_names, ns.mid_names)
+                full_name = get_alias(ns.aliases, full_name)
+                if full_name in (ns.full_names):
+                    listed.append(full_name)   
+                else:
+                    unlisted.append(full_name)
+    return(listed, unlisted)
 
 
-
-def search_names(master: list[ml.Entries], ns: ml.NameSearch, args):
+def assemble_name_lists(master: list[ml.Entries], ns: ml.NameSearch, args):
     """
     Search each entry in master, finding hits against a list of targets.
     Then match that list to a regex, and return the list of indexes to entries that match.
@@ -98,29 +117,17 @@ def search_names(master: list[ml.Entries], ns: ml.NameSearch, args):
     name_refs = {}
     unlisted_name_refs = {}
     for i, item in enumerate(master):
-        if args.case_insensitive:
-            results = ns.ah_search.find_matches_as_indexes(item.name.lower())
-        else:
-            results = ns.ah_search.find_matches_as_indexes(item.name)
-        if results != []:
-            results.sort(key=lambda x: x[0])
-            for result in results:
-                start, end = word_index(item.name, result)
-                if len(ns.first_names[result[0]]) == end - start:
-                    full_name = get_full_name(ns.first_names[result[0]], item.name, end, ns.full_names, ns.mid_names)
-                    if full_name[0:3] != "###":
-                        full_name = get_alias(ns.aliases, full_name)
-                        if full_name not in name_refs.keys():
-                            name_refs[full_name] = []
-                        if i not in name_refs[full_name]:  
-                            name_refs[full_name].append(i)
-                    else:
-                        full_name = full_name[3:]
-                        full_name = get_alias(ns.aliases, full_name)
-                        if full_name not in unlisted_name_refs.keys():
-                            unlisted_name_refs[full_name] = []
-                        if i not in unlisted_name_refs[full_name]:
-                            unlisted_name_refs[full_name].append(i)
+        listed, unlisted = search_names(item, ns, args)       
+        for full_name in listed:
+            if full_name not in name_refs.keys():
+                name_refs[full_name] = []
+            if i not in name_refs[full_name]:  
+                name_refs[full_name].append(i)
+        for full_name in unlisted:
+            if full_name not in unlisted_name_refs.keys():
+                unlisted_name_refs[full_name] = []
+            if i not in unlisted_name_refs[full_name]:
+                unlisted_name_refs[full_name].append(i)
     return name_refs, unlisted_name_refs
 
 
@@ -190,7 +197,7 @@ def main():
 
     # pdb.set_trace()
 
-    name_refs, unlisted_name_refs = search_names(master, name_search, args)
+    name_refs, unlisted_name_refs = assemble_name_lists(master, name_search, args)
     print("Listed:")
     for name in sorted(name_refs.keys()):
         print(f"{name}: {len(name_refs[name])}")
