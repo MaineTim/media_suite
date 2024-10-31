@@ -38,6 +38,15 @@ import ffmpeg
 
 
 @dataclass
+class NameSearch:
+    first_names: list[str] = field(default_factory=list)
+    full_names: list[str] = field(default_factory=list)
+    aliases: dict[str] = field(default_factory=dict)
+    mid_names: dict[str] = field(default_factory=dict)
+    ah_search: object = None
+
+
+@dataclass
 class Entries:
     UID: str = ""
     path: str = ""

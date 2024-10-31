@@ -71,7 +71,6 @@ def get_full_name(first_name: str, item_name: str, end: int, full_names: list[st
         name_element = item_name[end:].split()[element].strip()
         last_name = last_name + " " + name_element
         element += 1
-        print(f"{element}: {name_element} = {last_name}")
     full_name = f"{first_name} {last_name}".strip().title()
     while full_name[-1] in ",-]_).":
         full_name = full_name[:-1].strip()
@@ -90,7 +89,7 @@ def get_alias(aliases, full_name:str):
 
 
 
-def search_names(master: list[ml.Entries], first_names: list[str], full_names: list[str], aliases, mid_names: list[str], ah_search, args):
+def search_names(master: list[ml.Entries], ns: ml.NameSearch, args):
     """
     Search each entry in master, finding hits against a list of targets.
     Then match that list to a regex, and return the list of indexes to entries that match.
@@ -100,26 +99,24 @@ def search_names(master: list[ml.Entries], first_names: list[str], full_names: l
     unlisted_name_refs = {}
     for i, item in enumerate(master):
         if args.case_insensitive:
-            results = ah_search.find_matches_as_indexes(item.name.lower())
+            results = ns.ah_search.find_matches_as_indexes(item.name.lower())
         else:
-            results = ah_search.find_matches_as_indexes(item.name)
+            results = ns.ah_search.find_matches_as_indexes(item.name)
         if results != []:
-            tokens = ""
             results.sort(key=lambda x: x[0])
-            # for x in (list(zip(*results))[0]):
             for result in results:
                 start, end = word_index(item.name, result)
-                if len(first_names[result[0]]) == end - start:
-                    full_name = get_full_name(first_names[result[0]], item.name, end, full_names, mid_names)
+                if len(ns.first_names[result[0]]) == end - start:
+                    full_name = get_full_name(ns.first_names[result[0]], item.name, end, ns.full_names, ns.mid_names)
                     if full_name[0:3] != "###":
-                        full_name = get_alias(aliases, full_name)
+                        full_name = get_alias(ns.aliases, full_name)
                         if full_name not in name_refs.keys():
                             name_refs[full_name] = []
                         if i not in name_refs[full_name]:  
                             name_refs[full_name].append(i)
                     else:
                         full_name = full_name[3:]
-                        full_name = get_alias(aliases, full_name)
+                        full_name = get_alias(ns.aliases, full_name)
                         if full_name not in unlisted_name_refs.keys():
                             unlisted_name_refs[full_name] = []
                         if i not in unlisted_name_refs[full_name]:
@@ -165,20 +162,21 @@ def prepare_name_search(first_names_file_input_path: str, full_names_file_input_
             ml.exit_error(f"{args.first_names_file_input_path} not found and is required.")
         return full_names, aliases, mid_names
 
-    first_names = read_first_names_file(first_names_file_input_path)
-    full_names, aliases, mid_names = read_full_names_file(full_names_file_input_path)
+    ns = ml.NameSearch()
+    ns.first_names = read_first_names_file(first_names_file_input_path)
+    ns.full_names, ns.aliases, ns.mid_names = read_full_names_file(full_names_file_input_path)
     # Check through the first names in full_names and make sure they in the first_name list.
-    full_first_names = (name.split()[0] for name in full_names)   
+    full_first_names = (name.split()[0] for name in ns.full_names)   
     for first_name in full_first_names:
-        if first_name not in first_names:
-            first_names.append(first_name)
-    sorted(first_names)
+        if first_name not in ns.first_names:
+            ns.first_names.append(first_name)
+    sorted(ns.first_names)
     if case_insensitive:
-        ah_search = ah.AhoCorasick(list(map(lambda x: x.lower(), first_names)), matchkind=ah.MatchKind.LeftmostLongest)
+        ns.ah_search = ah.AhoCorasick(list(map(lambda x: x.lower(), ns.first_names)), matchkind=ah.MatchKind.LeftmostLongest)
     else:
-        ah_search = ah.AhoCorasick(first_names, matchkind=ah.MatchKind.LeftmostLongest)
+        ns.ah_search = ah.AhoCorasick(ns.first_names, matchkind=ah.MatchKind.LeftmostLongest)
  
-    return(first_names, full_names, aliases, mid_names, ah_search)
+    return(ns)
 
 
 def main():
@@ -188,11 +186,11 @@ def main():
     if (master := ml.read_master_file(args.master_input_path)) == []:
         ml.exit_error(f"{args.master_input_path} not found and is required.")
 
-    first_names, full_names, aliases, mid_names, ah_search = prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
+    name_search = prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
 
     # pdb.set_trace()
 
-    name_refs, unlisted_name_refs = search_names(master, first_names, full_names, aliases, mid_names, ah_search, args)
+    name_refs, unlisted_name_refs = search_names(master, name_search, args)
     print("Listed:")
     for name in sorted(name_refs.keys()):
         print(f"{name}: {len(name_refs[name])}")
