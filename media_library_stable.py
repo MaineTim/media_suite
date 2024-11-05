@@ -1,4 +1,4 @@
-# Media Library Version 23-06-16-a
+# Media Library Version 24-11-04-a
 
 import bisect
 import copy
@@ -38,6 +38,7 @@ import ahocorasick_rs as ah
 #         ("data", typing.Dict),
 #     ],
 # )
+
 
 @dataclass
 class FullName:
@@ -360,6 +361,7 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
 
 # Name Search Functions
 
+
 def read_first_names_file(first_names_file_input_path: str) -> list[str]:
     first_names = []
     if os.path.exists(first_names_file_input_path):
@@ -389,8 +391,7 @@ def read_full_names_file(full_names_file_input_path: str) -> list[str]:
     return full_names, aliases
 
 
-def prepare_name_search(
-        first_names_file_input_path: str, full_names_file_input_path: str, print_results: bool = False):
+def prepare_name_search(first_names_file_input_path: str, full_names_file_input_path: str, print_results: bool = False):
     """
     Load the first_name and full_name files, adding any first names from full_names to first_names.
     Add any alternate names to aliases dict.
@@ -473,6 +474,5 @@ def search_names(item_title: str, ns: NameSearch, args):
             if len(ns.first_names[result[0]]) == end - start:
                 full_name = get_full_name(ns.first_names[result[0]], item_title, end, ns.full_names)
                 full_name = get_alias(ns.aliases, full_name)
-# DEBUG                print(f" {full_name.listed} :: {full_name.name.title()} :: {item_title}")
                 found_names.append(full_name)
-    return(found_names)
+    return found_names

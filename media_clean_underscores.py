@@ -27,8 +27,7 @@ def get_args():
 
 
 def scan_uderscored_names(master: list[ml.Entries], ns: ml.NameSearch, args):
-    """
-    """
+    """ """
     underscored_listed_names = {}
     underscored_unlisted_names = {}
     for i, item in enumerate(master):
@@ -67,8 +66,9 @@ def main():
         for refs in name_refs[name]:
             print(f"{master[refs].name}")
 
-#print(f"{name}: {len(name_refs[name])}")
-        
+
+# print(f"{name}: {len(name_refs[name])}")
+
 #    print("Unlisted:")
 #    for name in sorted(unlisted_name_refs.keys()):
 #        if len(unlisted_name_refs[name]) >= 1 and " " in name:
@@ -77,4 +77,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

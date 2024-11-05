@@ -36,12 +36,12 @@ def assemble_name_lists(master: list[ml.Entries], ns: ml.NameSearch, args):
     for i, item in enumerate(master):
         found_names = ml.search_names(item.name, ns, args)
         for full_name in found_names:
-            if full_name.listed ==True:
+            if full_name.listed == True:
                 if full_name.name not in name_refs.keys():
                     name_refs[full_name.name] = []
                 if i not in name_refs[full_name.name]:
                     name_refs[full_name.name].append(i)
-            else:    
+            else:
                 if full_name.name not in unlisted_name_refs.keys():
                     unlisted_name_refs[full_name.name] = []
                 if i not in unlisted_name_refs[full_name.name]:
@@ -60,11 +60,11 @@ def main():
     name_refs, unlisted_name_refs = assemble_name_lists(master, name_search, args)
     print("Listed:")
     for name in sorted(name_refs.keys()):
-        print(f"{name}: {len(name_refs[name])}")
+        print(f"{name.title()}: {len(name_refs[name])}")
     print("Unlisted:")
     for name in sorted(unlisted_name_refs.keys()):
         if len(unlisted_name_refs[name]) >= 1 and " " in name:
-            print(f"{name}: {len(unlisted_name_refs[name])}")
+            print(f"{name.title()}: {len(unlisted_name_refs[name])}")
 
 
 if __name__ == "__main__":
