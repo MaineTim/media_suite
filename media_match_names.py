@@ -34,17 +34,18 @@ def assemble_name_lists(master: list[ml.Entries], ns: ml.NameSearch, args):
     name_refs = {}
     unlisted_name_refs = {}
     for i, item in enumerate(master):
-        listed, unlisted = ml.search_names(item.name, ns, args)
-        for full_name in listed:
-            if full_name not in name_refs.keys():
-                name_refs[full_name] = []
-            if i not in name_refs[full_name]:
-                name_refs[full_name].append(i)
-        for full_name in unlisted:
-            if full_name not in unlisted_name_refs.keys():
-                unlisted_name_refs[full_name] = []
-            if i not in unlisted_name_refs[full_name]:
-                unlisted_name_refs[full_name].append(i)
+        found_names = ml.search_names(item.name, ns, args)
+        for full_name in found_names:
+            if full_name.listed ==True:
+                if full_name.name not in name_refs.keys():
+                    name_refs[full_name.name] = []
+                if i not in name_refs[full_name.name]:
+                    name_refs[full_name.name].append(i)
+            else:    
+                if full_name.name not in unlisted_name_refs.keys():
+                    unlisted_name_refs[full_name.name] = []
+                if i not in unlisted_name_refs[full_name.name]:
+                    unlisted_name_refs[full_name.name].append(i)
     return name_refs, unlisted_name_refs
 
 
@@ -56,7 +57,6 @@ def main():
         ml.exit_error(f"{args.master_input_path} not found and is required.")
 
     name_search = ml.prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
-
     name_refs, unlisted_name_refs = assemble_name_lists(master, name_search, args)
     print("Listed:")
     for name in sorted(name_refs.keys()):
