@@ -476,3 +476,10 @@ def search_names(item_title: str, ns: NameSearch, args):
                 full_name = get_alias(ns.aliases, full_name)
                 found_names.append(full_name)
     return found_names
+
+
+def get_vendor(item_title: str):
+    """
+    Return vendor name (taken from .mp4 suffix)
+    """
+    return clean(item_title.split()[-1].replace(".mp4", ""))
