@@ -411,7 +411,10 @@ def prepare_name_search(first_names_file_input_path: str, full_names_file_input_
     return ns
 
 
-def clean(item: str):
+def clean(item: str) -> str:
+    """
+    Strip the string of separators.
+    """
     while item[0] in ",-]_).":
         item = item[1:].strip()
         if len(item) == 0:
@@ -423,7 +426,7 @@ def clean(item: str):
     return item
 
 
-def word_index(item_name: str, result: tuple[int, int, int]):
+def word_index(item_name: str, result: tuple[int, int, int]) -> (int, int):
     """
     Return the full start and end indexes for a potential partial match.
     """
@@ -438,7 +441,7 @@ def word_index(item_name: str, result: tuple[int, int, int]):
 
 def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str]) -> str:
     """
-    Return a "full name" based on a first name match in an entry. Tries to account for multi-part last names.
+    Return a "full name" based on a first name match in an entry. Tag known names.
     """
     partial_match = None
     name_element = clean(item_name[end:].split()[0].strip().upper())
@@ -454,16 +457,16 @@ def get_full_name(first_name: str, item_name: str, end: int, full_names: list[st
     return full_name
 
 
-def get_alias(aliases, full_name: FullName):
+def get_alias(aliases, full_name: FullName) -> FullName:
 
     if full_name.name in aliases.keys():
         return FullName(aliases[full_name.name])
     return full_name
 
 
-def search_names(item_title: str, ns: NameSearch, args):
+def search_names(item_title: str, ns: NameSearch, args) -> list[FullName]:
     """
-    Return two lists: name matches in the name database, and unmatched "names".
+    Return list of name matches in the name database, and unmatched "names".
     """
     found_names = []
     results = ns.ah_search.find_matches_as_indexes(item_title.upper())
@@ -478,7 +481,7 @@ def search_names(item_title: str, ns: NameSearch, args):
     return found_names
 
 
-def get_vendor(item_title: str):
+def get_vendor(item_title: str) -> str:
     """
     Return vendor name (taken from .mp4 suffix)
     """

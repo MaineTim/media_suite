@@ -71,7 +71,7 @@ def main():
         if len(unlisted_name_refs[name]) >= 1 and " " in name:
             print(f"{name.title()}: {len(unlisted_name_refs[name])}")
     print("vendors:")
-    #sorted(d, key=lambda k: len(d[k]), reverse=True):
+    # sorted(d, key=lambda k: len(d[k]), reverse=True):
     for vendor in sorted(vendors, key=lambda k: len(vendors[k]), reverse=True):
         print(f"{vendor}: {len(vendors[vendor])}")
         if len(vendors[vendor]) < 20:
