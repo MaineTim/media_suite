@@ -1,4 +1,4 @@
-# Media Library Version 24-11-04-a
+# Media Library Version 24-11-08-a
 
 import bisect
 import copy
@@ -9,6 +9,7 @@ import operator
 import os
 import pathlib
 import pickle
+import re
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -415,14 +416,15 @@ def clean(item: str) -> str:
     """
     Strip the string of separators.
     """
-    while item[0] in ",-]_).":
+    while item[0] in ",-[_(.+!?":
         item = item[1:].strip()
         if len(item) == 0:
             return ""
-    while item[-1] in ",-]_).":
+    while item[-1] in ",-]_).+!?":
         item = item[:-1].strip()
         if len(item) == 0:
             return ""
+    item = re.sub(" +", " ", item).strip()
     return item
 
 
@@ -445,11 +447,14 @@ def get_full_name(first_name: str, item_name: str, end: int, full_names: list[st
     """
     partial_match = None
     name_element = clean(item_name[end:].split()[0].strip().upper())
-    full_name = FullName(first_name + " " + name_element)
+    full_name = FullName(clean(first_name + " " + name_element))
     if full_name.name in full_names:
         partial_match = full_name
         partial_match.listed = True
-        full_name = FullName(str(full_name) + " " + clean(item_name[end:].split()[1].strip().upper()))
+    try:
+        full_name = FullName(clean(full_name.name + " " + clean(item_name[end:].split()[1].strip().upper())))
+    except IndexError:
+        return(FullName(first_name))
     if full_name.name in full_names:
         full_name.listed = True
     elif partial_match:
@@ -460,7 +465,7 @@ def get_full_name(first_name: str, item_name: str, end: int, full_names: list[st
 def get_alias(aliases, full_name: FullName) -> FullName:
 
     if full_name.name in aliases.keys():
-        return FullName(aliases[full_name.name])
+        return FullName(aliases[full_name.name], True)
     return full_name
 
 
