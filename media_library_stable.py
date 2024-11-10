@@ -416,13 +416,12 @@ def clean(item: str) -> str:
     """
     Strip the string of separators.
     """
-    while item[0] in ",-[_(.+!?":
-        item = item[1:].strip()
-        if len(item) == 0:
-            return ""
-    while item[-1] in ",-]_).+!?":
-        item = item[:-1].strip()
-        if len(item) == 0:
+    try:
+        while item[0] in ",-[_(.+!?":
+            item = item[1:].strip()
+        while item[-1] in ",-]_).+!?":
+            item = item[:-1].strip()
+    except IndexError:
             return ""
     item = re.sub(" +", " ", item).strip()
     return item
@@ -441,18 +440,30 @@ def word_index(item_name: str, result: tuple[int, int, int]) -> (int, int):
     return (start, end)
 
 
+def split_multi(item: str, delim: str):
+    split_item = re.split(delim, item)
+    for i, split in enumerate(split_item):
+        if split != "":
+            split = clean(split.strip())
+        if split == "":
+            split_item.pop(i)
+        else:
+            split_item[i] = split
+    return split_item
+
+
 def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str]) -> str:
     """
     Return a "full name" based on a first name match in an entry. Tag known names.
     """
     partial_match = None
-    name_element = clean(item_name[end:].split()[0].strip().upper())
+    name_element = clean(split_multi(item_name[end:], "[ ,-]+")[0].upper())
     full_name = FullName(clean(first_name + " " + name_element))
     if full_name.name in full_names:
         partial_match = full_name
         partial_match.listed = True
     try:
-        full_name = FullName(clean(full_name.name + " " + clean(item_name[end:].split()[1].strip().upper())))
+        full_name = FullName(clean(full_name.name + " " + clean(split_multi(item_name[end:], "[ ,-]+")[1].upper())))
     except IndexError:
         return(FullName(first_name))
     if full_name.name in full_names:
