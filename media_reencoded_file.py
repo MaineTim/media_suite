@@ -22,15 +22,9 @@ def get_args() -> argparse.Namespace:
         default="",
         help="Original file backup dir (required).",
     )
-    parser.add_argument(
-        "-d", action="store_true", default=False, dest="write_csv", help="Write CSV."
-    )
-    parser.add_argument(
-        "-i", type=str, dest="master_input_path", default="master_filelist"
-    )
-    parser.add_argument(
-        "-n", action="store_true", default=False, dest="no_action", help="No action."
-    )
+    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
+    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument(
         "-r",
         action="store_true",
@@ -39,9 +33,7 @@ def get_args() -> argparse.Namespace:
         help="Replace backups.",
     )
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument(
-        "-v", action="store_true", default=False, dest="verbose", help="verbose."
-    )
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="verbose.")
     parser.add_argument(
         "-w",
         action="store_true",
@@ -65,25 +57,19 @@ def replace_backups(item: Entries) -> Entries:
                 backup_stat = os.stat(backup_path)
                 # Backup inode doesn't match.
                 if backup_stat.st_ino != inode:
-                    ml.exit_error(
-                        f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}."
-                    )
+                    ml.exit_error(f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}.")
             ml.copy_file(
                 os.path.join(item.path, item.name),
                 backup_path,
                 gb_verbose,
                 gb_no_action,
             )
-            backup_ptr = ml.make_backup_path_entry(
-                path, int(os.stat(backup_path).st_ino)
-            )
+            backup_ptr = ml.make_backup_path_entry(path, int(os.stat(backup_path).st_ino))
             if backup_ptr not in new_entry.paths:
                 new_entry.backups += 1
                 new_entry.paths.append(backup_ptr)
         else:
-            ml.exit_error(
-                f"{backup_path} backup doesn't exist. {item.backups} backups listed."
-            )
+            ml.exit_error(f"{backup_path} backup doesn't exist. {item.backups} backups listed.")
     if new_entry.backups > 0:
         return new_entry
     return item
@@ -101,9 +87,7 @@ def process_targets(
         found, orig_index = ml.check_pointers_to_name(sorted_pointers, item.name)
         if found:
             if gb_verbose:
-                print(
-                    f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}"
-                )
+                print(f"Found original file: {os.path.join(master[orig_index].path, master[orig_index].name)}")
         else:
             ml.exit_error(f"Original entry for {item.name} not found.")
 

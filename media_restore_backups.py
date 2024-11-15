@@ -13,19 +13,11 @@ gb_write_csv = False
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument(
-        "-d", action="store_true", default=False, dest="write_csv", help="Write CSV."
-    )
-    parser.add_argument(
-        "-i", type=str, dest="master_input_path", default="master_filelist"
-    )
-    parser.add_argument(
-        "-n", action="store_true", default=False, dest="no_action", help="No action."
-    )
+    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
+    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument(
-        "-v", action="store_true", default=False, dest="verbose", help="verbose."
-    )
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="verbose.")
     parser.add_argument(
         "-w",
         action="store_true",
@@ -37,24 +29,18 @@ def get_args() -> argparse.Namespace:
     return args
 
 
-def find_original(
-    master: list[Entries], sorted_pointers: list[SortPointer], target: Entries
-) -> Tuple[bool, int]:
+def find_original(master: list[Entries], sorted_pointers: list[SortPointer], target: Entries) -> Tuple[bool, int]:
     found = True
     start = 0
     while found:
-        found, fp_index = ml.check_pointers_to_original_size(
-            sorted_pointers, target.original_size, start
-        )
+        found, fp_index = ml.check_pointers_to_original_size(sorted_pointers, target.original_size, start)
         if found and (master[fp_index].name == target.name):
             return (found, fp_index)
         start = fp_index
     return (False, 0)
 
 
-def process_targets(
-    master: list[Entries], sorted_pointers: list[SortPointer], target: list[Entries]
-) -> list[Entries]:
+def process_targets(master: list[Entries], sorted_pointers: list[SortPointer], target: list[Entries]) -> list[Entries]:
     for item in target:
         item_path = os.path.join(item.path, item.name)
         found, orig_index = find_original(master, sorted_pointers, item)
@@ -116,9 +102,7 @@ def main() -> None:
     else:
         ml.exit_error(f"Target not found: {target_path}")
 
-    master = process_targets(
-        master, ml.pointer_sort_database(master, "original_size"), target
-    )
+    master = process_targets(master, ml.pointer_sort_database(master, "original_size"), target)
 
     if args.write_file:
         master.sort(key=lambda x: getattr(x, "current_size"))

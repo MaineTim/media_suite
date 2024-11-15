@@ -27,9 +27,7 @@ def get_args() -> argparse.Namespace:
         default="00:00:00",
         help="End trim length (HH:MM:SS).",
     )
-    parser.add_argument(
-        "-n", action="store_true", default=False, dest="no_action", help="No action."
-    )
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument(
         "-s",
         type=str,
@@ -44,18 +42,14 @@ def get_args() -> argparse.Namespace:
         dest="tag_modified",
         help="Add original duration to filename.",
     )
-    parser.add_argument(
-        "-v", action="store_true", default=False, dest="verbose", help="Verbose."
-    )
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
 
 
 def str_to_td(string: str) -> dt.timedelta:
     dt_result = dt.datetime.strptime(string, "%H:%M:%S")
-    return dt.timedelta(
-        hours=dt_result.hour, minutes=dt_result.minute, seconds=dt_result.second
-    )
+    return dt.timedelta(hours=dt_result.hour, minutes=dt_result.minute, seconds=dt_result.second)
 
 
 def main():
@@ -80,9 +74,7 @@ def main():
             ml.move_file(item_path, args.original_dir, gb_verbose, gb_no_action)
             source_path = os.path.join(args.original_dir, item.name)
         else:
-            ml.exit_error(
-                f"Original dir {args.original_dir} doesn't exist, and is required!"
-            )
+            ml.exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
 
         duration = ml.file_duration(source_path)
         td_duration = dt.timedelta(seconds=float(duration))

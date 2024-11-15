@@ -37,12 +37,8 @@ def get_args() -> argparse.Namespace:
         dest="dump_data",
         help="Dump data field.",
     )
-    parser.add_argument(
-        "-f", action="store_true", default=False, dest="fix_errors", help="Fix errors."
-    )
-    parser.add_argument(
-        "-i", type=str, dest="master_input_path", default="master_filelist"
-    )
+    parser.add_argument("-f", action="store_true", default=False, dest="fix_errors", help="Fix errors.")
+    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
     parser.add_argument(
         "-s",
@@ -131,29 +127,16 @@ def main() -> None:
                 except (ValueError, TypeError) as e:
                     ml.exit_error(e)
                 if not isinstance(master[i].date, datetime.datetime):
-                    ml.exit_error(
-                        f"{master[i].name} date field is invalid: {master[i].date}"
-                    )
+                    ml.exit_error(f"{master[i].name} date field is invalid: {master[i].date}")
                 if not isinstance(master[i].data, dict):
-                    ml.exit_error(
-                        f"{master[i].name} data field is invalid: {master[i].data}"
-                    )
+                    ml.exit_error(f"{master[i].name} data field is invalid: {master[i].data}")
 
         # Create a list of inodes, and check that there are no duplicates (multiple entries pointing to one file).
-        inodes = sorted(
-            [(i, item.ino) for i, item in enumerate(master)], key=lambda x: x[1]
-        )
+        inodes = sorted([(i, item.ino) for i, item in enumerate(master)], key=lambda x: x[1])
         for i in range(len(inodes) - 1):
-            if (
-                inodes[i][1] == inodes[i + 1][1]
-                and master[inodes[i][0]].path == master[inodes[i + 1][0]].path
-            ):
-                item_a = os.path.join(
-                    master[inodes[i][0]].path, master[inodes[i][0]].name
-                )
-                item_b = os.path.join(
-                    master[inodes[i + 1][0]].path, master[inodes[i + 1][0]].name
-                )
+            if inodes[i][1] == inodes[i + 1][1] and master[inodes[i][0]].path == master[inodes[i + 1][0]].path:
+                item_a = os.path.join(master[inodes[i][0]].path, master[inodes[i][0]].name)
+                item_b = os.path.join(master[inodes[i + 1][0]].path, master[inodes[i + 1][0]].name)
                 print(f"{item_a}")
                 print(f"{item_b} inodes match.")
 
@@ -169,9 +152,7 @@ def main() -> None:
                 continue
             # Entry doesn't match target inode, flag it.
             if target_stat.st_ino != item.ino:
-                print(
-                    f"{target_path} inode {target_stat.st_ino} doesn't match entry {item.ino}."
-                )
+                print(f"{target_path} inode {target_stat.st_ino} doesn't match entry {item.ino}.")
                 if args.fix_errors:
                     if get_reply("Fix this error?"):
                         master[i].ino = target_stat.st_ino
@@ -179,9 +160,7 @@ def main() -> None:
                 continue
             # Entry size doesn't match, flag it.
             if target_stat.st_size != item.current_size:
-                print(
-                    f"{target_path} has changed size from {item.current_size} to {target_stat.st_size}."
-                )
+                print(f"{target_path} has changed size from {item.current_size} to {target_stat.st_size}.")
                 continue
 
             if (normal_paths := normalize_paths(item.paths)) != item.paths:
@@ -194,9 +173,7 @@ def main() -> None:
                 changed = True
 
             if len(item.paths) != item.backups:
-                print(
-                    f"{target_path} backup count {item.backups} does not match path list length {len(item.paths)}."
-                )
+                print(f"{target_path} backup count {item.backups} does not match path list length {len(item.paths)}.")
                 if args.fix_errors:
                     if get_reply("Fix this error?"):
                         master[i].backups = len(item.paths)
@@ -218,14 +195,10 @@ def main() -> None:
                             backup_stat = os.stat(backup_path)
                             # Backup inode doesn't match.
                             if backup_stat.st_ino != inode:
-                                print(
-                                    f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}."
-                                )
+                                print(f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}.")
                                 if args.fix_errors:
                                     if get_reply("Fix this error?"):
-                                        master[i].paths[
-                                            j
-                                        ] = f"{path}/[{backup_stat.st_ino}]"
+                                        master[i].paths[j] = f"{path}/[{backup_stat.st_ino}]"
                                         changed = True
                                 continue
                             # Backup size doesn't match.
@@ -235,9 +208,7 @@ def main() -> None:
                                 )
                                 continue
                         else:
-                            print(
-                                f"{backup_path} backup doesn't exist. {item.backups} backups listed."
-                            )
+                            print(f"{backup_path} backup doesn't exist. {item.backups} backups listed.")
                             if args.fix_errors:
                                 master[i].paths.remove(whole_path)
                                 master[i].backups -= 1

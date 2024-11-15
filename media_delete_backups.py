@@ -18,12 +18,8 @@ def get_args() -> argparse.Namespace:
         dest="deleted_input_path",
         default="deleted_filelist",
     )
-    parser.add_argument(
-        "-n", action="store_true", default=False, dest="no_action", help="No action."
-    )
-    parser.add_argument(
-        "-v", action="store_true", default=False, dest="verbose", help="Verbose."
-    )
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
 
@@ -51,17 +47,9 @@ def delete_found_entry(target_path: str, filename: str, item: str, inode: int):
         print(f"Found matching inode {inode} {item.name}: {filename}")
     if os.stat(os.path.join(target_path, filename)).st_size != item.current_size:
         if gb_verbose:
-            print(
-                f"Sizes don't match! {os.stat(os.path.join(target_path, filename)).st_size} {item.current_size}"
-            )
+            print(f"Sizes don't match! {os.stat(os.path.join(target_path, filename)).st_size} {item.current_size}")
         return
-    if (
-        abs(
-            ml.file_duration(os.path.join(target_path, filename))
-            - (item.current_duration)
-        )
-        < 0.5
-    ):
+    if abs(ml.file_duration(os.path.join(target_path, filename)) - (item.current_duration)) < 0.5:
         remove_file(os.path.join(target_path, filename))
     else:
         if gb_verbose:
@@ -87,9 +75,7 @@ def process_deleted_entry(
             remove_file(backup_filepath)
         else:
             if gb_verbose:
-                print(
-                    f"Inodes don't match! Actual: {backup_stat.st_ino} Recorded:{inode}"
-                )
+                print(f"Inodes don't match! Actual: {backup_stat.st_ino} Recorded:{inode}")
             return
     else:
         found, filename = find_inode(target_list, inode)
@@ -100,9 +86,7 @@ def process_deleted_entry(
                 print(f"No backup found: {backup_filepath}")
 
 
-def process_deleted_list(
-    deleted: list[Entries], target_path: str, target_list: list[Entries]
-) -> None:
+def process_deleted_list(deleted: list[Entries], target_path: str, target_list: list[Entries]) -> None:
     for item in deleted[:]:
         for encoded_backup_path in item.paths:
             if encoded_backup_path == "":
@@ -116,9 +100,7 @@ def process_deleted_list(
                 continue
             if os.path.exists(backup_path):
                 backup_filepath = os.path.join(backup_path, item.name)
-                process_deleted_entry(
-                    target_list, item, backup_filepath, target_path, inode
-                )
+                process_deleted_entry(target_list, item, backup_filepath, target_path, inode)
 
 
 def main() -> None:

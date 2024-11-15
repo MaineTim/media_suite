@@ -14,9 +14,7 @@ def get_args():
 
     parser = argparse.ArgumentParser(description="Search for entries.")
     #    parser.add_argument("target_strings", nargs="+")
-    parser.add_argument(
-        "-m", type=str, dest="master_input_path", default="master_filelist"
-    )
+    parser.add_argument("-m", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument(
         "-f",
         type=str,
@@ -30,12 +28,8 @@ def get_args():
         dest="case_insensitive",
         help="Case insensitive.",
     )
-    parser.add_argument(
-        "-l", type=str, dest="full_names_file_input_path", default="full_names.txt"
-    )
-    parser.add_argument(
-        "-p", action="store_true", default=False, dest="print_path", help="Print path."
-    )
+    parser.add_argument("-l", type=str, dest="full_names_file_input_path", default="full_names.txt")
+    parser.add_argument("-p", action="store_true", default=False, dest="print_path", help="Print path.")
     parser.add_argument(
         "-t",
         action="store_true",
@@ -79,9 +73,7 @@ def main():
     if (master := ml.read_master_file(args.master_input_path)) == []:
         ml.exit_error(f"{args.master_input_path} not found and is required.")
 
-    name_search = ml.prepare_name_search(
-        args.first_names_file_input_path, args.full_names_file_input_path
-    )
+    name_search = ml.prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
 
     name_refs, unlisted_name_refs = scan_uderscored_names(master, name_search, args)
     print("Listed:")

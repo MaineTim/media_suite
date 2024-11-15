@@ -10,16 +10,10 @@ gb_write_csv = False
 
 
 def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Check for duplicate files against database."
-    )
+    parser = argparse.ArgumentParser(description="Check for duplicate files against database.")
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument(
-        "-d", action="store_true", default=False, dest="write_csv", help="Write CSV."
-    )
-    parser.add_argument(
-        "-i", type=str, dest="master_input_path", default="master_filelist"
-    )
+    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
+    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument(
         "-m",
         action="store_true",
@@ -27,19 +21,13 @@ def get_args() -> argparse.Namespace:
         dest="move_original",
         help="Move existing files.",
     )
-    parser.add_argument(
-        "-n", action="store_true", default=False, dest="no_action", help="No action."
-    )
-    parser.add_argument(
-        "-v", action="store_true", default=False, dest="verbose", help="Verbose."
-    )
+    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
 
 
-def check_target(
-    target_path: str, master: list[ml.Entries], item: ml.Entries
-) -> Tuple[bool, int]:
+def check_target(target_path: str, master: list[ml.Entries], item: ml.Entries) -> Tuple[bool, int]:
     found, result = ml.check_db(master, item)
     if found:
         return found, result
@@ -48,10 +36,7 @@ def check_target(
         checksum = ml.checksum(os.path.join(target_path, item.name))
         target_found = False
         while not target_found:
-            if (
-                ml.checksum(os.path.join(master[result].path, master[result].name))
-                == checksum
-            ):
+            if ml.checksum(os.path.join(master[result].path, master[result].name)) == checksum:
                 return found, result
             if gb_verbose:
                 print(f"Master entry: {master[result].name}")
@@ -91,9 +76,7 @@ def main() -> None:
             if not os.path.exists(trash_path) and not gb_no_action:
                 os.mkdir(trash_path)
             if gb_verbose:
-                print(
-                    f"Master entry: {os.path.join(master[result].path, master[result].name)}"
-                )
+                print(f"Master entry: {os.path.join(master[result].path, master[result].name)}")
                 print(f"Target file: {os.path.join(item.path, item.name)}")
             if args.move_original:
                 ml.move_file(

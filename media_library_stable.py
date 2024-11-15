@@ -141,9 +141,7 @@ def file_duration(filename: str) -> float:
 ### Database operations
 
 
-def pointer_sort_database(
-    database: list[Entries], sort_key: str = "original_size"
-) -> list[SortPointer]:
+def pointer_sort_database(database: list[Entries], sort_key: str = "original_size") -> list[SortPointer]:
 
     pointers = [SortPointer(getattr(e, sort_key), i) for i, e in enumerate(database)]
     pointers.sort(key=lambda x: getattr(x, "key"))
@@ -202,9 +200,7 @@ def check_inode(database: list[Entries], inode: int) -> Tuple[bool, int]:
     return (False, 0)
 
 
-def check_inode_in_path(
-    database: list[Entries], path: str, inode: int
-) -> Tuple[bool, int]:
+def check_inode_in_path(database: list[Entries], path: str, inode: int) -> Tuple[bool, int]:
     for i, item in enumerate(database):
         if (item.ino == inode) and (item.path == path):
             return (True, i)
@@ -213,9 +209,7 @@ def check_inode_in_path(
 
 # Find an entry based on original file size, using a sorted list of pointers to master.
 # Return True, resulting master index if size matches.
-def check_pointers_to_original_size(
-    pointers: list[SortPointer], size: int, start: int = 0
-) -> Tuple[bool, int]:
+def check_pointers_to_original_size(pointers: list[SortPointer], size: int, start: int = 0) -> Tuple[bool, int]:
     entry_size = operator.attrgetter("size")
 
     if start > 0:
@@ -237,9 +231,7 @@ def check_pointers_to_name(pointers: list[SortPointer], name: str):
 
 
 # Return True, result if size matches.
-def check_current_size(
-    database: list[Entries], size: int, start: int = 0
-) -> Tuple[bool, int]:
+def check_current_size(database: list[Entries], size: int, start: int = 0) -> Tuple[bool, int]:
     entry_size = operator.attrgetter("current_size")
 
     if start > 0:
@@ -253,9 +245,7 @@ def check_current_size(
 
 # Find an entry based on original file size, using a sorted copy of master.
 # Return True, result if size matches.
-def check_original_size(
-    database: list[Entries], size: int, start: int = 0
-) -> Tuple[bool, int]:
+def check_original_size(database: list[Entries], size: int, start: int = 0) -> Tuple[bool, int]:
     entry_size = operator.attrgetter("original_size")
 
     if start > 0:
@@ -289,9 +279,7 @@ def create_file_entry(path: str, update_duration: bool = False) -> Entries:
         name=os.path.basename(path),
         original_size=stat_entry.st_size,
         current_size=stat_entry.st_size,
-        date=datetime.datetime.fromtimestamp(
-            stat_entry.st_mtime, tz=datetime.timezone.utc
-        ),
+        date=datetime.datetime.fromtimestamp(stat_entry.st_mtime, tz=datetime.timezone.utc),
         backups=0,
         paths=[],
         original_duration=duration,
@@ -310,8 +298,7 @@ def create_file_list(path: str, update_duration: bool = False) -> list[Entries]:
     files = [
         f
         for f in os.listdir(path)
-        if os.path.isfile(os.path.join(path, f))
-        and os.path.splitext(f)[1] in [".mp4", ".mp4~"]
+        if os.path.isfile(os.path.join(path, f)) and os.path.splitext(f)[1] in [".mp4", ".mp4~"]
     ]
     for f in files:
         entry = create_file_entry(os.path.join(path, f), update_duration)
@@ -328,9 +315,7 @@ def read_master_file(master_input_path: str) -> list[Entries]:
     return master
 
 
-def write_entries_file(
-    master: list[Entries], master_output_path: str, write_csv: bool
-) -> None:
+def write_entries_file(master: list[Entries], master_output_path: str, write_csv: bool) -> None:
     with open(master_output_path, "wb") as f:
         pickle.dump(master, f)
 
@@ -431,9 +416,7 @@ def prepare_name_search(
         if first_name not in ns.first_names:
             ns.first_names.append(first_name)
     sorted(ns.first_names)
-    ns.ah_search = ah.AhoCorasick(
-        ns.first_names, matchkind=ah.MatchKind.LeftmostLongest
-    )
+    ns.ah_search = ah.AhoCorasick(ns.first_names, matchkind=ah.MatchKind.LeftmostLongest)
     return ns
 
 
@@ -477,9 +460,7 @@ def split_multi(item: str, delim: str):
     return split_item
 
 
-def get_full_name(
-    first_name: str, item_name: str, end: int, full_names: list[str]
-) -> str:
+def get_full_name(first_name: str, item_name: str, end: int, full_names: list[str]) -> str:
     """
     Return a "full name" based on a first name match in an entry. Tag known names.
     """
@@ -490,13 +471,7 @@ def get_full_name(
         partial_match = full_name
         partial_match.listed = True
     try:
-        full_name = FullName(
-            clean(
-                full_name.name
-                + " "
-                + clean(split_multi(item_name[end:], "[ ,-]+")[1].upper())
-            )
-        )
+        full_name = FullName(clean(full_name.name + " " + clean(split_multi(item_name[end:], "[ ,-]+")[1].upper())))
     except IndexError:
         return FullName(first_name)
     if full_name.name in full_names:
@@ -524,9 +499,7 @@ def search_names(item_title: str, ns: NameSearch, args) -> list[FullName]:
         for result in results:
             start, end = word_index(item_title, result)
             if len(ns.first_names[result[0]]) == end - start:
-                full_name = get_full_name(
-                    ns.first_names[result[0]], item_title, end, ns.full_names
-                )
+                full_name = get_full_name(ns.first_names[result[0]], item_title, end, ns.full_names)
                 full_name = get_alias(ns.aliases, full_name)
                 found_names.append(full_name)
     return found_names

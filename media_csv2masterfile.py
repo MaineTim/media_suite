@@ -13,13 +13,9 @@ gb_verbose = False
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert CSV file to master_filelist.")
     parser.add_argument("target_csv", nargs=1)
-    parser.add_argument(
-        "-d", action="store_true", default=False, dest="write_csv", help="Write CSV."
-    )
+    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument(
-        "-v", action="store_true", default=False, dest="verbose", help="Verbose."
-    )
+    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     parser.add_argument(
         "-w",
         action="store_true",
