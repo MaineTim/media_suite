@@ -18,10 +18,26 @@ def get_args():
     parser = argparse.ArgumentParser(description="Trim filenames of target phrase.")
     parser.add_argument("target_phrase", nargs=1)
     parser.add_argument("target_path", nargs=1)
-    parser.add_argument("-i", action="store_true", default=False, dest="add_index", help="Add index number.")
-    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
-    parser.add_argument("-t", action="store_true", default=False, dest="trim_number", help="Trim numbers.")
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose")
+    parser.add_argument(
+        "-i",
+        action="store_true",
+        default=False,
+        dest="add_index",
+        help="Add index number.",
+    )
+    parser.add_argument(
+        "-n", action="store_true", default=False, dest="no_action", help="No action."
+    )
+    parser.add_argument(
+        "-t",
+        action="store_true",
+        default=False,
+        dest="trim_number",
+        help="Trim numbers.",
+    )
+    parser.add_argument(
+        "-v", action="store_true", default=False, dest="verbose", help="Verbose"
+    )
     args = parser.parse_args()
     return args
 
@@ -32,7 +48,9 @@ def rename_file(target_path, orig, name):
     if not gb_no_action:
         if os.path.exists(os.path.join(target_path, name)):
             ml.exit_error(f"{os.path.join(target_path, name)} already exists")
-        shutil.move(os.path.join(target_path, orig.name), os.path.join(target_path, name))
+        shutil.move(
+            os.path.join(target_path, orig.name), os.path.join(target_path, name)
+        )
 
 
 def create_file_list(path):
@@ -41,7 +59,8 @@ def create_file_list(path):
     files = [
         f
         for f in os.listdir(path)
-        if os.path.isfile(os.path.join(path, f)) and os.path.splitext(f)[1] in [".mp4", ".mp4~"]
+        if os.path.isfile(os.path.join(path, f))
+        and os.path.splitext(f)[1] in [".mp4", ".mp4~"]
     ]
     for f in files:
         entry_path = os.path.join(path, f)
@@ -82,7 +101,7 @@ def add_numeric_index(name: str, index: int):
     index += 1
     loc = name.rfind(" - ")
     if loc == -1:
-        loc = len(name) - 1
+        loc = len(name) - 4
     return (index, name[:loc] + f" {index:03}" + name[loc:])
 
 

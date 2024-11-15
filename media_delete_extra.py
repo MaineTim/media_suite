@@ -11,11 +11,22 @@ gb_change_made = False
 
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Delete an entry.")
-    parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
+    parser.add_argument(
+        "-d", action="store_true", default=False, dest="write_csv", help="Write CSV."
+    )
     parser.add_argument("-D", type=str, dest="delete_path", help="Deleted files path.")
-    parser.add_argument("--deleted-input-path", type=str, dest="deleted_input_path", default="deleted_filelist")
-    parser.add_argument("--deleted-ouput-path", type=str, dest="deleted_output_path", required=False)
-    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
+    parser.add_argument(
+        "--deleted-input-path",
+        type=str,
+        dest="deleted_input_path",
+        default="deleted_filelist",
+    )
+    parser.add_argument(
+        "--deleted-ouput-path", type=str, dest="deleted_output_path", required=False
+    )
+    parser.add_argument(
+        "-i", type=str, dest="master_input_path", default="master_filelist"
+    )
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
     args = parser.parse_args()
     return args
@@ -46,7 +57,9 @@ def remove_master_entry(master: list[ml.Entries], entry_num: int) -> list[ml.Ent
     return master
 
 
-def process_entry(master: list[Entries], item: Entries, deleted_log: list[Entries]) -> None:
+def process_entry(
+    master: list[Entries], item: Entries, deleted_log: list[Entries]
+) -> None:
 
     deleted_entry = None
     found, result = ml.check_inode(master, item.ino)
@@ -61,7 +74,9 @@ def process_entry(master: list[Entries], item: Entries, deleted_log: list[Entrie
         else:
             print(f"{item.name} not found in master list.")
     if deleted_entry:
-        bisect.insort(deleted_log, deleted_entry, key=operator.attrgetter("current_size"))
+        bisect.insort(
+            deleted_log, deleted_entry, key=operator.attrgetter("current_size")
+        )
         print(f"Logging {item.name}")
     return (master, deleted_log)
 

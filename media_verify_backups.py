@@ -8,11 +8,17 @@ import media_library as ml
 
 
 def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Verify backup files with no Masterfile entry.")
+    parser = argparse.ArgumentParser(
+        description="Verify backup files with no Masterfile entry."
+    )
     parser.add_argument("backup_path", nargs=1)
-    parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
+    parser.add_argument(
+        "-i", type=str, dest="master_input_path", default="master_filelist"
+    )
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
+    parser.add_argument(
+        "-v", action="store_true", default=False, dest="verbose", help="Verbose."
+    )
     args = parser.parse_args()
     return args
 
@@ -40,7 +46,9 @@ def check_master_files(master: list[ml.Entries], curr: ml.Entries) -> int:
         result += 1
 
 
-def get_entries_by_duration(master: list[ml.Entries], duration: float) -> list[ml.Entries]:
+def get_entries_by_duration(
+    master: list[ml.Entries], duration: float
+) -> list[ml.Entries]:
 
     entry_list = []
     rdur = round(duration, 1)

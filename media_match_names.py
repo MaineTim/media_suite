@@ -14,13 +14,34 @@ def get_args():
 
     parser = argparse.ArgumentParser(description="Search for entries.")
     #    parser.add_argument("target_strings", nargs="+")
-    parser.add_argument("-m", type=str, dest="master_input_path", default="master_filelist")
-    parser.add_argument("-f", type=str, dest="first_names_file_input_path", default="female_first_names.txt")
-    parser.add_argument("-i", action="store_true", default=False, dest="case_insensitive", help="Case insensitive.")
-    parser.add_argument("-l", type=str, dest="full_names_file_input_path", default="full_names.txt")
-    parser.add_argument("-p", action="store_true", default=False, dest="print_path", help="Print path.")
     parser.add_argument(
-        "-t", action="store_true", default=False, dest="sort_time", help="Sort based on original duration."
+        "-m", type=str, dest="master_input_path", default="master_filelist"
+    )
+    parser.add_argument(
+        "-f",
+        type=str,
+        dest="first_names_file_input_path",
+        default="female_first_names.txt",
+    )
+    parser.add_argument(
+        "-i",
+        action="store_true",
+        default=False,
+        dest="case_insensitive",
+        help="Case insensitive.",
+    )
+    parser.add_argument(
+        "-l", type=str, dest="full_names_file_input_path", default="full_names.txt"
+    )
+    parser.add_argument(
+        "-p", action="store_true", default=False, dest="print_path", help="Print path."
+    )
+    parser.add_argument(
+        "-t",
+        action="store_true",
+        default=False,
+        dest="sort_time",
+        help="Sort based on original duration.",
     )
     args = parser.parse_args()
     return args
@@ -61,8 +82,12 @@ def main():
     if (master := ml.read_master_file(args.master_input_path)) == []:
         ml.exit_error(f"{args.master_input_path} not found and is required.")
 
-    name_search = ml.prepare_name_search(args.first_names_file_input_path, args.full_names_file_input_path)
-    name_refs, unlisted_name_refs, vendors = assemble_name_lists(master, name_search, args)
+    name_search = ml.prepare_name_search(
+        args.first_names_file_input_path, args.full_names_file_input_path
+    )
+    name_refs, unlisted_name_refs, vendors = assemble_name_lists(
+        master, name_search, args
+    )
     print("Listed:")
     for name in sorted(name_refs.keys()):
         print(f"{name.title()}: {len(name_refs[name])}")

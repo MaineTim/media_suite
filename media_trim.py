@@ -13,24 +13,49 @@ def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Trim file.")
     parser.add_argument("target_path", nargs=1)
     parser.add_argument(
-        "-b", type=str, dest="original_dir", required=True, default="", help="Original file backup dir (required)."
+        "-b",
+        type=str,
+        dest="original_dir",
+        required=True,
+        default="",
+        help="Original file backup dir (required).",
     )
-    parser.add_argument("-e", type=str, dest="end_trim_length", default="00:00:00", help="End trim length (HH:MM:SS).")
-    parser.add_argument("-n", action="store_true", default=False, dest="no_action", help="No action.")
     parser.add_argument(
-        "-s", type=str, dest="start_trim_length", default="00:00:00", help="Start trim length (HH:MM:SS)."
+        "-e",
+        type=str,
+        dest="end_trim_length",
+        default="00:00:00",
+        help="End trim length (HH:MM:SS).",
     )
     parser.add_argument(
-        "-t", action="store_true", default=False, dest="tag_modified", help="Add original duration to filename."
+        "-n", action="store_true", default=False, dest="no_action", help="No action."
     )
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
+    parser.add_argument(
+        "-s",
+        type=str,
+        dest="start_trim_length",
+        default="00:00:00",
+        help="Start trim length (HH:MM:SS).",
+    )
+    parser.add_argument(
+        "-t",
+        action="store_true",
+        default=False,
+        dest="tag_modified",
+        help="Add original duration to filename.",
+    )
+    parser.add_argument(
+        "-v", action="store_true", default=False, dest="verbose", help="Verbose."
+    )
     args = parser.parse_args()
     return args
 
 
 def str_to_td(string: str) -> dt.timedelta:
     dt_result = dt.datetime.strptime(string, "%H:%M:%S")
-    return dt.timedelta(hours=dt_result.hour, minutes=dt_result.minute, seconds=dt_result.second)
+    return dt.timedelta(
+        hours=dt_result.hour, minutes=dt_result.minute, seconds=dt_result.second
+    )
 
 
 def main():
@@ -55,7 +80,9 @@ def main():
             ml.move_file(item_path, args.original_dir, gb_verbose, gb_no_action)
             source_path = os.path.join(args.original_dir, item.name)
         else:
-            ml.exit_error(f"Original dir {args.original_dir} doesn't exist, and is required!")
+            ml.exit_error(
+                f"Original dir {args.original_dir} doesn't exist, and is required!"
+            )
 
         duration = ml.file_duration(source_path)
         td_duration = dt.timedelta(seconds=float(duration))
@@ -73,7 +100,10 @@ def main():
             if proc_return.returncode != 0:
                 ml.exit_error("Trim process failed.")
             new_duration = ml.file_duration(item_path)
-            os.utime(item_path, (dt.datetime.timestamp(item.date), dt.datetime.timestamp(item.date)))
+            os.utime(
+                item_path,
+                (dt.datetime.timestamp(item.date), dt.datetime.timestamp(item.date)),
+            )
             if gb_verbose:
                 print(f"Trimmed from {duration} to {new_duration}.")
 

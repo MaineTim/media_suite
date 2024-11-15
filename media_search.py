@@ -11,11 +11,25 @@ import media_library as ml
 def get_args():
     parser = argparse.ArgumentParser(description="Search for entries.")
     parser.add_argument("target_strings", nargs="+")
-    parser.add_argument("-m", type=str, dest="master_input_path", default="master_filelist")
-    parser.add_argument("-i", action="store_true", default=False, dest="case_insensitive", help="Case insensitive.")
-    parser.add_argument("-p", action="store_true", default=False, dest="print_path", help="Print path.")
     parser.add_argument(
-        "-t", action="store_true", default=False, dest="sort_time", help="Sort based on original duration."
+        "-m", type=str, dest="master_input_path", default="master_filelist"
+    )
+    parser.add_argument(
+        "-i",
+        action="store_true",
+        default=False,
+        dest="case_insensitive",
+        help="Case insensitive.",
+    )
+    parser.add_argument(
+        "-p", action="store_true", default=False, dest="print_path", help="Print path."
+    )
+    parser.add_argument(
+        "-t",
+        action="store_true",
+        default=False,
+        dest="sort_time",
+        help="Sort based on original duration.",
     )
     args = parser.parse_args()
     return args
@@ -34,7 +48,11 @@ def parse_target_strings(args):
         i += 1
         if token == "OR" and len(args.target_strings) > i > 0:
             if or_count < 1:
-                target_regex = target_regex[: len(target_regex) - 1] + "[" + target_regex[len(target_regex) - 1 :]
+                target_regex = (
+                    target_regex[: len(target_regex) - 1]
+                    + "["
+                    + target_regex[len(target_regex) - 1 :]
+                )
             or_count = 2
             i -= 1
         else:
@@ -91,7 +109,9 @@ def main():
             )
     else:
         for ent in entries:
-            print(f'{time.strftime("%H:%M:%S", time.gmtime(float(ent.original_duration)))} - {ent.name}')
+            print(
+                f'{time.strftime("%H:%M:%S", time.gmtime(float(ent.original_duration)))} - {ent.name}'
+            )
 
 
 if __name__ == "__main__":
