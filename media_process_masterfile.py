@@ -24,6 +24,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-d", action="store_true", default=False, dest="write_csv", help="Write CSV.")
     parser.add_argument("-i", type=str, dest="master_input_path", default="master_filelist")
     parser.add_argument("-o", type=str, dest="master_output_path", required=False)
+    parser.add_argument("-u", action="store_true", default=False, dest="assign_uid", help="Assign UIDs.")
     parser.add_argument("-v", action="store_true", default=False, dest="verbose", help="Verbose.")
     args = parser.parse_args()
     return args
@@ -126,6 +127,9 @@ def main() -> None:
         master, quarentine = check_current_fs_status(master)
     target_paths = build_current_fs_path_list(args.target_paths)
     master = process_targets(master, quarentine, target_paths)
+    if args.assign_uid:
+        for i, _ in enumerate(master):
+            master[i].UID = f"{i:06d}"
 
     ml.write_entries_file(master, master_output_path, args.write_csv)
 
