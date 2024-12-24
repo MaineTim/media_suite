@@ -54,6 +54,13 @@ def get_args() -> argparse.Namespace:
         dest="write_file",
         help="Write master_filelist.",
     )
+    parser.add_argument(
+        "-y",
+        action="store_true",
+        default=False,
+        dest="answer_yes",
+        help="Suppress prompts.",
+    )
     args = parser.parse_args()
     return args
 
@@ -154,7 +161,7 @@ def main() -> None:
             if target_stat.st_ino != item.ino:
                 print(f"{target_path} inode {target_stat.st_ino} doesn't match entry {item.ino}.")
                 if args.fix_errors:
-                    if get_reply("Fix this error?"):
+                    if args.answer_yes or get_reply("Fix this error?"):
                         master[i].ino = target_stat.st_ino
                         changed = True
                 continue
@@ -175,7 +182,7 @@ def main() -> None:
             if len(item.paths) != item.backups:
                 print(f"{target_path} backup count {item.backups} does not match path list length {len(item.paths)}.")
                 if args.fix_errors:
-                    if get_reply("Fix this error?"):
+                    if args.answer_yes or get_reply("Fix this error?"):
                         master[i].backups = len(item.paths)
                         changed = True
 
@@ -183,7 +190,7 @@ def main() -> None:
                 if item.paths.count(whole_path) > 1:
                     print(f"Multiple entries for {item.name}: {whole_path}")
                     if args.fix_errors:
-                        if get_reply("Fix this error?"):
+                        if args.answer_yes or get_reply("Fix this error?"):
                             del master[i].paths[j]
                             master[i].backups -= 1
                             changed = True
@@ -197,7 +204,7 @@ def main() -> None:
                             if backup_stat.st_ino != inode:
                                 print(f"{backup_path} backup inode {backup_stat.st_ino} doesn't match entry {inode}.")
                                 if args.fix_errors:
-                                    if get_reply("Fix this error?"):
+                                    if args.answer_yes or get_reply("Fix this error?"):
                                         master[i].paths[j] = f"{path}/[{backup_stat.st_ino}]"
                                         changed = True
                                 continue

@@ -306,16 +306,27 @@ def create_file_list(path: str, update_duration: bool = False) -> list[Entries]:
     return file_entries
 
 
-def read_master_file(master_input_path: str) -> list[Entries]:
+def get_entry_index(master: list[Entries], uid: str):
+
+    index = [i for i, entry in enumerate(master) if entry.UID == uid]
+    if len(index) == 0:
+        return None
+    return index[0]
+
+
+def read_master_file(master_input_path: str, verbose: bool = False) -> list[Entries]:
     master: list[Entries] = []
     if os.path.exists(master_input_path):
         with open(master_input_path, "rb") as f:
             master = pickle.load(f)
-        print(f"{len(master)} records found.")
+        if verbose:
+            print(f"{len(master)} records found.")
     return master
 
 
-def write_entries_file(master: list[Entries], master_output_path: str, write_csv: bool) -> None:
+def write_entries_file(
+    master: list[Entries], master_output_path: str, write_csv: bool = True, verbose: bool = False
+) -> None:
     with open(master_output_path, "wb") as f:
         pickle.dump(master, f)
 
@@ -367,18 +378,19 @@ def write_entries_file(master: list[Entries], master_output_path: str, write_csv
 # Name Search Functions
 
 
-def read_first_names_file(first_names_file_input_path: str) -> list[str]:
+def read_first_names_file(first_names_file_input_path: str, verbose: bool = False) -> list[str]:
     first_names = []
     if os.path.exists(first_names_file_input_path):
         with open(first_names_file_input_path, "r") as f:
             first_names = [name.strip().upper() for name in f]
-        print(f"{len(first_names)} records found.")
+        if verbose:
+            print(f"{len(first_names)} records found.")
     else:
-        exit_error(f"{args.first_names_file_input_path} not found and is required.")
+        exit_error(f"{first_names_file_input_path} not found and is required.")
     return first_names
 
 
-def read_full_names_file(full_names_file_input_path: str) -> list[str]:
+def read_full_names_file(full_names_file_input_path: str, verbose: bool = False) -> list[str]:
     full_names = []
     aliases = {}
     if os.path.exists(full_names_file_input_path):
@@ -390,9 +402,10 @@ def read_full_names_file(full_names_file_input_path: str) -> list[str]:
                     aliases[name] = alias
                 full_names.append(name.strip().upper())
                 split_name = full_names[-1].split()
-        print(f"{len(full_names)} records found.")
+        if verbose:
+            print(f"{len(full_names)} records found.")
     else:
-        exit_error(f"{args.first_names_file_input_path} not found and is required.")
+        exit_error(f"{first_names_file_input_path} not found and is required.")
     return full_names, aliases
 
 
@@ -488,7 +501,7 @@ def get_alias(aliases, full_name: FullName) -> FullName:
     return full_name
 
 
-def search_names(item_title: str, ns: NameSearch, args) -> list[FullName]:
+def search_names(item_title: str, ns: NameSearch) -> list[FullName]:
     """
     Return list of name matches in the name database, and unmatched "names".
     """
