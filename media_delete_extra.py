@@ -99,7 +99,7 @@ def main() -> None:
 
     if gb_change_made:
         ml.write_entries_file(master, master_output_path, args.write_csv)
-    ml.write_entries_file(deleted_log, deleted_output_path, args.write_csv)
+        ml.write_entries_file(deleted_log, deleted_output_path, args.write_csv)
 
 
 if __name__ == "__main__":
